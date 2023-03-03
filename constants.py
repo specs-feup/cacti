@@ -1,0 +1,2 @@
+EXIT_FAILURE  = 1
+CPP_EXTENSION = str(".cpp")
