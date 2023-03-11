@@ -96,10 +96,6 @@ if __name__ == '__main__':
 
         file_path = os.path.join(output_path, "results.json")
 
-        out_file = open("out.txt", "a")
-        out_file.write(out)
-        out_file.close()
-
         with open(file_path, "w+") as f:
             json.dump(processed_test, f)
     

@@ -1,4 +1,5 @@
 laraImport("lara.Io");
+laraImport("weaver.Query");
 laraImport("clava.Clava");
 
 
@@ -30,6 +31,10 @@ catch (error) {
 
 try {
   Clava.rebuild();
+
+  if (Query.search("file").get().length == 0) {
+    throw new Error("An error occurred while trying to parse the source file.");
+  }
 
   output.test_parsing = {
     success: true,
@@ -73,4 +78,3 @@ catch (error) {
 
   exit(EXIT_FAILURE);
 }
-
