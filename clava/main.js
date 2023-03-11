@@ -1,6 +1,12 @@
 laraImport("lara.Io");
 laraImport("clava.Clava");
 
+
+const EXIT_FAILURE = 1;
+
+const CACTI_DELIMITER_BEGIN = 'CACTI_OUTPUT_BEGIN';
+const CACTI_DELIMITER_END   = 'CACTI_OUTPUT_END';
+
 const file = laraArgs.file;
 const outputFolder = laraArgs.outputFolder;
 
@@ -16,7 +22,7 @@ try {
 catch (error) {
   output.error = "An error occurred while trying to access the source file.";
   
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 
@@ -26,17 +32,19 @@ try {
   Clava.rebuild();
 
   output.test_parsing = {
-    sucess: true,
-    log: "The parsing of the source file was completed successfully."
-  } 
+    success: true,
+    log: "The parsing of the source code was completed successfully."
+  };
 } 
 catch (error) {
   output.test_parsing = {
-    sucess: false,
+    success: false,
     log: "An error occurred while trying to parse the source file."
   }
-  Io.writeJson(outputFolder + "/results.json", output);
-  exit(1);
+
+  console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
+
+  exit(EXIT_FAILURE);
 }
 
 
@@ -49,16 +57,20 @@ try {
   Clava.popAst();
 
   output.test_code_generation = {
-    sucess: true,
+    success: true,
     log: "The generation of the source code was completed succesfully."
-  }
+  };
+
+  console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 }
 catch (error) {
   output.test_code_generation = {
-    sucess: false,
+    success: false,
     log: "An error occurred while trying to generate source code from the input file."
-  }
-  Io.writeJson(outputFolder + "/results.json", output);
+  };
+    
+  console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
+
+  exit(EXIT_FAILURE);
 }
 
-Io.writeJson(outputFolder + "/results.json", output);

@@ -1,9 +1,66 @@
-import os
 import subprocess
+import json
+import os
+
 import constants
+
+from clava import exec
+
 
 def find_source_files(root):
     return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith(constants.CPP_EXTENSION)]
+
+def run(cmd):
+    proc = subprocess.Popen(cmd,
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE,
+        text = True)
+
+    stdout, stderr = proc.communicate()
+
+    return proc.returncode, stdout, stderr
+
+
+def parse_output(output):
+    _, _, after = output.partition(constants.CACTI_DELIMITER_BEGIN)
+    json_data, _, after = after.partition(constants.CACTI_DELIMITER_END)
+
+    return json_data
+
+
+def process_json(json_test, err):
+    # if the parsing failed, modify the json object to contain information about the error
+    if not json_test['test_parsing']['success']:
+        json_test['test_parsing']['log'] = err
+
+    # if the code generation failed, modify the json object to contain information about the error
+    elif not json_test['test_code_generation']['success']:
+        json_test['test_code_generation']['log'] = err
+
+    return json_test
+
+def get_transpiler_cmd(source_path, ouput_path):
+    input_transpiler = str(os.sys.argv[2]).lower()
+
+    if input_transpiler == constants.TRANSPILER_ROSE:
+        return ' '
+    
+    if input_transpiler == constants.TRANSPILER_INSIEME:
+        return ' '
+
+    if input_transpiler == constants.TRANSPILER_CETUS:
+        return ' '
+    
+    if input_transpiler == constants.TRANSPILER_CIL:
+        return ' '
+
+    if input_transpiler == constants.TRANSPILER_MERCURIUM:
+        return ' '
+
+    if input_transpiler == constants.TRANSPILER_CLAVA: 
+        return exec.clava(source_path, output_path)
+    
+    return ' '
 
 
 if __name__ == '__main__':
@@ -28,13 +85,21 @@ if __name__ == '__main__':
         
         if not os.path.exists(output_path):
             os.makedirs(output_path)
+                        
+        cmd = get_transpiler_cmd(source_path, output_path)
+
+        code, out, err = run(cmd)
         
-        script_folder = f"{WORKING_DIR}{TRANSPILER}/" 
-        script_path = script_folder + 'script.sh'
+        json_test = json.loads(parse_output(out))
         
-        cmd_str = f"{script_path} \'{script_folder}\' \'{source_path}\' \'{output_path}\'"
+        processed_test = process_json(json_test, err)
 
-        subprocess.run(cmd_str, shell = True)
+        file_path = os.path.join(output_path, "results.json")
 
+        out_file = open("out.txt", "a")
+        out_file.write(out)
+        out_file.close()
 
-
+        with open(file_path, "w+") as f:
+            json.dump(processed_test, f)
+    
