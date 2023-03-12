@@ -1,5 +1,6 @@
 import subprocess
 import json
+import time
 import os
 
 import constants
@@ -10,15 +11,24 @@ from clava import exec
 def find_source_files(root):
     return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith(constants.CPP_EXTENSION)]
 
+
 def run(cmd):
+    start_time = time.time()
+
     proc = subprocess.Popen(cmd,
         stdout = subprocess.PIPE,
         stderr = subprocess.PIPE,
         text = True)
 
+    proc.wait()
+
+    end_time = time.time()
+
+    runtime = end_time - start_time
+    
     stdout, stderr = proc.communicate()
 
-    return proc.returncode, stdout, stderr
+    return proc.returncode, stdout, stderr, round(runtime, 3)
 
 
 def parse_output(output):
@@ -28,7 +38,7 @@ def parse_output(output):
     return json_data
 
 
-def process_json(json_test, err):
+def process_json(json_test, err, runtime):
     # if the parsing failed, modify the json object to contain information about the error
     if not json_test['test_parsing']['success']:
         json_test['test_parsing']['log'] = err
@@ -37,7 +47,10 @@ def process_json(json_test, err):
     elif not json_test['test_code_generation']['success']:
         json_test['test_code_generation']['log'] = err
 
+    json_test['runtime'] = runtime
+
     return json_test
+
 
 def get_transpiler_cmd(source_path, ouput_path):
     input_transpiler = str(os.sys.argv[2]).lower()
@@ -88,12 +101,12 @@ if __name__ == '__main__':
                         
         cmd = get_transpiler_cmd(source_path, output_path)
 
-        code, out, err = run(cmd)
+        code, out, err, runtime = run(cmd)
         
         json_test = json.loads(parse_output(out))
         
-        processed_test = process_json(json_test, err)
-
+        processed_test = process_json(json_test, err, runtime)
+        
         file_path = os.path.join(output_path, "results.json")
 
         with open(file_path, "w+") as f:
