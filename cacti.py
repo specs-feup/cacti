@@ -2,6 +2,7 @@ import subprocess
 import json
 import time
 import os
+import filecmp
 
 import constants
 
@@ -32,9 +33,12 @@ def run(cmd):
 
 
 def parse_output(output):
+    print(f"output = {output}.")
+
     _, _, after = output.partition(constants.CACTI_DELIMITER_BEGIN)
     json_data, _, after = after.partition(constants.CACTI_DELIMITER_END)
 
+    print(f"json_data = {json_data}.")
     return json_data
 
 
@@ -46,6 +50,10 @@ def process_json(json_test, err, runtime):
     # if the code generation failed, modify the json object to contain information about the error
     elif not json_test['test_code_generation']['success']:
         json_test['test_code_generation']['log'] = err
+    
+    elif 'test_idempotency' in json_test and not json_test['test_idempotency']['success']:
+        json_test['test_idempotency']['log'] = err
+
 
     json_test['runtime'] = runtime
 
@@ -101,13 +109,24 @@ if __name__ == '__main__':
                         
         cmd = get_transpiler_cmd(source_path, output_path)
 
+        print(f"Running {rel_path}...")
         code, out, err, runtime = run(cmd)
-        
+        print("done.")
         json_test = json.loads(parse_output(out))
-        
         processed_test = process_json(json_test, err, runtime)
         
+        if 'test_idempotency' not in json_test: # the code generated both files successfully
+            genfile1 = os.path.join(output_path, "generated1.cpp")
+            genfile2 = os.path.join(output_path, "generated2.cpp")
+            if filecmp.cmp(genfile1, genfile2):
+                test_idempotency_content = {"success": "true"}
+                processed_test["test_idempotency"] = test_idempotency_content
+            else:
+                test_idempotency_content = {"success": "true", "log": "The files were not equal."}
+                processed_test["test_idempotency"] = test_idempotency_content
         file_path = os.path.join(output_path, "results.json")
+
+
 
         with open(file_path, "w+") as f:
             json.dump(processed_test, f)
