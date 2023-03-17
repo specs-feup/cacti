@@ -1,3 +1,4 @@
 .vscode/
 __pycache__/
 woven_code/
+*.txt

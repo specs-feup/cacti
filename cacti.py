@@ -13,6 +13,17 @@ from constants import const_test  as test
 
 def find_source_files(root):
     return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith(misc.CPP_EXTENSION)]
+    """Fetches all the C++ source files to be tested by CACTI.
+    
+    Args:
+        root: The path to the root directory where all of the source files are located.
+    
+    Returns:
+        A list containing the full paths to all the source files to be tested by CACTI, in a string format.
+    
+    Raises:
+        This method does not raise any exception.
+    """
 
 
 def run(cmd):
@@ -49,9 +60,6 @@ def process_json(json_test, err, runtime):
     # if the code generation failed, modify the json object to contain information about the error
     elif not json_test[test.CODE_GENERATION][test.SUCCESS]:
         json_test[test.CODE_GENERATION][test.LOG] = err
-    
-    elif test.IDEMPOTENCY in json_test and not json_test[test.IDEMPOTENCY][test.SUCCESS]:
-        json_test[test.IDEMPOTENCY][test.LOG] = err
 
     json_test[test.RUNTIME] = runtime
 
@@ -96,6 +104,9 @@ def test_idempotency(output_path, tries):
         
         gen = os.path.join(output_path, concti.GEN_FILE_PREAMBLE + str(curr_try) + misc.CPP_EXTENSION)
         
+        if not os.path.isfile(gen):
+            raise OSError(f"Error: the file {gen} could not be found.")
+
         if not os.path.isfile(gen) or filecmp.cmp(src, gen):
             break
     
@@ -125,7 +136,7 @@ if __name__ == '__main__':
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
-        cmd = get_transpiler_cmd(source_path, output_path, 'dummy', 0)
+        cmd = get_transpiler_cmd(source_path, output_path, concti.FLAG_DUMMY, 0)
 
         print(f"Running {rel_path}...")
         
@@ -137,9 +148,18 @@ if __name__ == '__main__':
 
         processed_test = process_json(json_test, err, runtime)
         
+        # test for idempotency
         if test.CODE_GENERATION in processed_test:
             if processed_test[test.CODE_GENERATION][test.SUCCESS]:
-                tries = test_idempotency(output_path, test.IDEMPOTENCY_TRIES)
+                try:
+                    tries = test_idempotency(output_path, test.IDEMPOTENCY_DEPTH)
+                except OSError:
+                    tries = test.IDEMPOTENCY_DEPTH
+                
+                processed_test[test.IDEMPOTENCY][test.SUCCESS] = (tries != test.IDEMPOTENCY_DEPTH)
+                processed_test[test.IDEMPOTENCY][test.IDEMPOTENCY_TRIES] = tries
+
+        # test for correctness
 
         file_path = os.path.join(output_path, "results.json")
 

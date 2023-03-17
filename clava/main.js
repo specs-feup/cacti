@@ -96,5 +96,16 @@ catch (error) {
   exit(EXIT_FAILURE);
 }
 
+// update the output json with the idempotency and correctness test objects
+output.test_idempotency = {
+  success: '',
+  tries: 0
+};
+
+output.test_correctness = {
+  success: '',
+  log: ''
+};
+
 if (!(silent == CACTI_FLAG_SILENT))
   console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
