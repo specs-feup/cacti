@@ -16,9 +16,3 @@ TRANSPILER_CETUS     = str('cetus')
 TRANSPILER_CIL       = str('cil')
 TRANSPILER_MERCURIUM = str('mercurium')
 TRANSPILER_CLAVA     = str('clava')
-
-
-# CACTI output delimiters
-
-CACTI_DELIMITER_BEGIN = 'CACTI_OUTPUT_BEGIN'
-CACTI_DELIMITER_END   = 'CACTI_OUTPUT_END'

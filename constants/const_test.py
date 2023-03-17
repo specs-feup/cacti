@@ -1,0 +1,8 @@
+PARSING           = str('test_parsing')
+CODE_GENERATION   = str('test_code_generation')
+IDEMPOTENCY       = str('test_idempotency')
+IDEMPOTENCY_TRIES = int(5)
+CORRECTNESS       = str('test_correctness')
+SUCCESS           = str('success')
+LOG               = str('log')
+RUNTIME           = str('runtime')
