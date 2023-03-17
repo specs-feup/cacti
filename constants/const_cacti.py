@@ -1,6 +1,7 @@
-
 FLAG_SILENT       = str('-s')
 FLAG_DUMMY        = str('dummy')
 DELIMITER_BEGIN   = str('CACTI_OUTPUT_BEGIN')
 DELIMITER_END     = str('CACTI_OUTPUT_END')
+IR_FILE_PREAMBLE  = str('ir')
+SRC_FILE_PREAMBLE = str('src')
 GEN_FILE_PREAMBLE = str('gen')

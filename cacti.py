@@ -27,7 +27,6 @@ def find_source_files(root):
 
 
 def run(cmd):
-
     proc = subprocess.Popen(cmd,
         stdout = subprocess.PIPE,
         stderr = subprocess.PIPE,
@@ -38,6 +37,9 @@ def run(cmd):
     stdout, stderr = proc.communicate()
 
     return proc.returncode, stdout, stderr
+    """
+    
+    """
 
 
 def parse_output(output):
@@ -87,6 +89,7 @@ def test_idempotency(output_path, tries):
     curr_try = 0
 
     while curr_try != tries:
+        # gen0.cpp
         src = os.path.join(output_path, concti.GEN_FILE_PREAMBLE + str(curr_try) + misc.CPP_EXTENSION)
 
         curr_try += 1
@@ -100,10 +103,59 @@ def test_idempotency(output_path, tries):
         if not os.path.isfile(gen):
             raise OSError(f"Error: the file {gen} could not be found.")
 
-        if not os.path.isfile(gen) or filecmp.cmp(src, gen):
-            break
+        if filecmp.cmp(src, gen):
+            return True, curr_try
     
-    return curr_try
+    return False, curr_try
+
+
+def get_clang_cmd(source_path, output_path):
+    return ["clang", "-S", "-O0", "-emit-llvm", source_path, "-o", output_path]
+
+
+def test_correctness(source_path, output_path):
+    gen_cpp_path = os.path.join(output_path, concti.GEN_FILE_PREAMBLE + '0' + misc.CPP_EXTENSION)
+    
+    temp_path = os.path.join(output_path, "src.cpp")
+    os.rename(gen_cpp_path, temp_path)
+
+    src_ir_dir = os.path.join(output_path, concti.SRC_FILE_PREAMBLE)
+    gen_ir_dir = os.path.join(output_path, concti.GEN_FILE_PREAMBLE)
+
+    os.makedirs(src_ir_dir)
+    os.makedirs(gen_ir_dir)
+
+    ir_from_src = os.path.join(src_ir_dir, concti.IR_FILE_PREAMBLE + misc.IR_EXTENSION)
+    ir_from_gen = os.path.join(gen_ir_dir, concti.IR_FILE_PREAMBLE + misc.IR_EXTENSION)
+
+    cmd_clang_src = get_clang_cmd(source_path, ir_from_src)
+    cmd_clang_gen = get_clang_cmd(temp_path, ir_from_gen)
+
+    src_proc_code, _, _ = run(cmd_clang_src)
+    gen_proc_code, _, _ = run(cmd_clang_gen)
+    os.rename(temp_path, gen_cpp_path)
+
+    return ir_from_src, ir_from_gen, src_proc_code, gen_proc_code
+
+
+def strip_ir(ir):
+    ir_file = open(ir, "r")
+    lines = []
+
+    while "; Function Attrs:" not in ir_file.readline():
+        continue
+
+    line = ""
+
+    while True:
+        line = ir_file.readline()
+        
+        if "!llvm.module.flags" in line:
+            break
+
+        lines.append(line)
+    
+    return ''.join(lines)
 
 
 if __name__ == '__main__':
@@ -130,7 +182,7 @@ if __name__ == '__main__':
             os.makedirs(output_path)
 
         cmd = get_transpiler_cmd(source_path, output_path, concti.FLAG_DUMMY, 0)
-
+        
         print(f"Running {rel_path}...")
         
         code, out, err = run(cmd)
@@ -141,25 +193,47 @@ if __name__ == '__main__':
 
         processed_test = process_json(json_test, err)
         
-        # test for idempotency
-        if test.CODE_GENERATION in processed_test:
-            if processed_test[test.CODE_GENERATION][test.SUCCESS]:
-                time_idempotency = 0.0
+        if test.CODE_GENERATION in processed_test and processed_test[test.CODE_GENERATION][test.SUCCESS]:                
+            # start testing for idempotency
+            time_idempotency = 0.0
+            
+            try:
+                start_idempotency = time.time()
                 
-                try:
-                    start_idempotency = time.time()
-                    tries = test_idempotency(output_path, test.IDEMPOTENCY_DEPTH)
-                    end_idempotency = time.time()
+                converged, tries = test_idempotency(output_path, test.IDEMPOTENCY_DEPTH)
 
-                    time_idempotency = round(end_idempotency - start_idempotency, 3)
-                except OSError:
-                    tries = test.IDEMPOTENCY_DEPTH
+                end_idempotency = time.time()
+
+                time_idempotency = round(end_idempotency - start_idempotency, 3)
+            except OSError:
+                converged = False
+                tries = -1
+            
+            processed_test[test.IDEMPOTENCY][test.SUCCESS] = converged
+            processed_test[test.IDEMPOTENCY][test.IDEMPOTENCY_TRIES] = tries
+            processed_test[test.IDEMPOTENCY][test.TIME] = time_idempotency
+
+            # start testing for correctness
+
+            start_correctness = time.time()
+            
+            ir_from_src, ir_from_gen, src_proc_code, gen_proc_code = test_correctness(source_path, output_path)
+
+            end_correctness = time.time()
+
+            time_correctness = round(end_correctness - start_correctness, 3)
+
+            # the clang process failed to execute, meaning correctness cannot be tested
+            if src_proc_code == misc.EXIT_FAILURE or gen_proc_code == misc.EXIT_FAILURE:
+                processed_test[test.CORRECTNESS][test.SUCCESS] = False
+                processed_test[test.CORRECTNESS][test.TIME] = time_correctness
+            else:            
+                stripped_src_ir = strip_ir(ir_from_src)
+                stripped_gen_ir = strip_ir(ir_from_gen)
+
+                processed_test[test.CORRECTNESS][test.SUCCESS] = stripped_src_ir == stripped_gen_ir
+                processed_test[test.CORRECTNESS][test.TIME] = time_correctness
                 
-                processed_test[test.IDEMPOTENCY][test.SUCCESS] = (tries != test.IDEMPOTENCY_DEPTH)
-                processed_test[test.IDEMPOTENCY][test.IDEMPOTENCY_TRIES] = tries
-                processed_test[test.IDEMPOTENCY][test.TIME] = time_idempotency
-
-        # test for correctness
 
         file_path = os.path.join(output_path, "results.json")
 

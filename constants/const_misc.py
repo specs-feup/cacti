@@ -6,7 +6,7 @@ EXIT_FAILURE = 1
 # C++ extension
 
 CPP_EXTENSION = str('.cpp')
-
+IR_EXTENSION  = str('.ll')
 
 # list of IR-based transpilers
 

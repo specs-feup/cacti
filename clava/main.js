@@ -11,7 +11,7 @@ const GEN_FILE_PREAMBLE = 'gen';
 const CPP_EXTENSION = '.cpp';
 
 
-// CACTI consntants
+// CACTI constants
 const CACTI_DELIMITER_BEGIN = 'CACTI_OUTPUT_BEGIN';
 const CACTI_DELIMITER_END   = 'CACTI_OUTPUT_END';
 const CACTI_FLAG_SILENT     = '-s'
@@ -118,7 +118,6 @@ output.test_idempotency = {
 
 output.test_correctness = {
   success: '',
-  log: '',
   time: 0
 };
 
