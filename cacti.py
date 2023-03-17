@@ -27,7 +27,6 @@ def find_source_files(root):
 
 
 def run(cmd):
-    start_time = time.time()
 
     proc = subprocess.Popen(cmd,
         stdout = subprocess.PIPE,
@@ -36,13 +35,9 @@ def run(cmd):
 
     proc.wait()
 
-    end_time = time.time()
-
-    runtime = end_time - start_time
-    
     stdout, stderr = proc.communicate()
 
-    return proc.returncode, stdout, stderr, round(runtime, 3)
+    return proc.returncode, stdout, stderr
 
 
 def parse_output(output):
@@ -52,7 +47,7 @@ def parse_output(output):
     return json_data
 
 
-def process_json(json_test, err, runtime):
+def process_json(json_test, err):
     # if the parsing failed, modify the json object to contain information about the error
     if not json_test[test.PARSING][test.SUCCESS]:
         json_test[test.PARSING][test.LOG] = err
@@ -60,8 +55,6 @@ def process_json(json_test, err, runtime):
     # if the code generation failed, modify the json object to contain information about the error
     elif not json_test[test.CODE_GENERATION][test.SUCCESS]:
         json_test[test.CODE_GENERATION][test.LOG] = err
-
-    json_test[test.RUNTIME] = runtime
 
     return json_test
 
@@ -100,7 +93,7 @@ def test_idempotency(output_path, tries):
 
         cmd = get_transpiler_cmd(src, output_path, concti.FLAG_SILENT, curr_try)
         
-        _, _, _, _ = run(cmd)
+        _, _, _ = run(cmd)
         
         gen = os.path.join(output_path, concti.GEN_FILE_PREAMBLE + str(curr_try) + misc.CPP_EXTENSION)
         
@@ -123,7 +116,7 @@ if __name__ == '__main__':
 
     os.getcwd()
     
-    TRANSPILER   = str(os.sys.argv[2]).lower()
+    TRANSPILER = str(os.sys.argv[2]).lower()
 
     paths = find_source_files(INPUT_FOLDER)
     paths.sort()
@@ -140,24 +133,31 @@ if __name__ == '__main__':
 
         print(f"Running {rel_path}...")
         
-        code, out, err, runtime = run(cmd)
+        code, out, err = run(cmd)
         
         print(">> Test exited successfully.")
 
         json_test = json.loads(parse_output(out))
 
-        processed_test = process_json(json_test, err, runtime)
+        processed_test = process_json(json_test, err)
         
         # test for idempotency
         if test.CODE_GENERATION in processed_test:
             if processed_test[test.CODE_GENERATION][test.SUCCESS]:
+                time_idempotency = 0.0
+                
                 try:
+                    start_idempotency = time.time()
                     tries = test_idempotency(output_path, test.IDEMPOTENCY_DEPTH)
+                    end_idempotency = time.time()
+
+                    time_idempotency = round(end_idempotency - start_idempotency, 3)
                 except OSError:
                     tries = test.IDEMPOTENCY_DEPTH
                 
                 processed_test[test.IDEMPOTENCY][test.SUCCESS] = (tries != test.IDEMPOTENCY_DEPTH)
                 processed_test[test.IDEMPOTENCY][test.IDEMPOTENCY_TRIES] = tries
+                processed_test[test.IDEMPOTENCY][test.TIME] = time_idempotency
 
         # test for correctness
 

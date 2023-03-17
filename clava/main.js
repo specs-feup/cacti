@@ -46,15 +46,21 @@ catch (error) {
 
 // test the parsing
 try {
+  const start = Date.now();
+
   const allFilesParsed = Clava.rebuild();
 
-  if (allFilesParsed === false) {
+  const end = Date.now();
+
+  if (allFilesParsed === false) 
     throw new Error("An error occurred while trying to parse the source file.");
-  }
+
+  const time = (end - start)/1000.0
 
   output.test_parsing = {
     success: true,
-    log: "The parsing of the source code was completed successfully."
+    log: "The parsing of the source code was completed successfully.",
+    time: time
   };
 }
 catch (error) {
@@ -75,13 +81,20 @@ if (!(silent == CACTI_FLAG_SILENT))
 
 // test the code generation
 try {
+  const start = Date.now();
+
   Query.search("file").getFirst().setName(GEN_FILE_PREAMBLE + idempotencyTry + CPP_EXTENSION);
   Clava.writeCode(outputFolder);
   Clava.popAst();
 
+  const end = Date.now();
+
+  const time = (end - start)/1000.0;
+
   output.test_code_generation = {
     success: true,
-    log: "The generation of the source code was completed succesfully."
+    log: "The generation of the source code was completed succesfully.",
+    time: time
   };
 }
 catch (error) {
@@ -99,12 +112,14 @@ catch (error) {
 // update the output json with the idempotency and correctness test objects
 output.test_idempotency = {
   success: '',
-  tries: 0
+  tries: 0,
+  time: 0
 };
 
 output.test_correctness = {
   success: '',
-  log: ''
+  log: '',
+  time: 0
 };
 
 if (!(silent == CACTI_FLAG_SILENT))
