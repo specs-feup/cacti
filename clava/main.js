@@ -1,5 +1,3 @@
-
-
 laraImport("lara.Io");
 laraImport("weaver.Query");
 laraImport("clava.Clava");
@@ -7,6 +5,7 @@ laraImport("clava.Clava");
 
 // miscelleanous constants
 const EXIT_FAILURE = 1;
+const SRC_FILE_PREAMBLE = 'src';
 const GEN_FILE_PREAMBLE = 'gen';
 const CPP_EXTENSION = '.cpp';
 
@@ -23,6 +22,7 @@ const outputFolder = laraArgs.outputFolder;
 const silent = laraArgs.silent;
 const idempotencyTry = laraArgs.ntry;
 
+const genFileName = idempotencyTry == 0 ? SRC_FILE_PREAMBLE + CPP_EXTENSION : GEN_FILE_PREAMBLE + idempotencyTry + CPP_EXTENSION;
 
 let output = {};
 
@@ -83,7 +83,7 @@ if (!(silent == CACTI_FLAG_SILENT))
 try {
   const start = Date.now();
 
-  Query.search("file").getFirst().setName(GEN_FILE_PREAMBLE + idempotencyTry + CPP_EXTENSION);
+  Query.search("file").getFirst().setName(genFileName);
   Clava.writeCode(outputFolder);
   Clava.popAst();
 
