@@ -117,11 +117,8 @@ def get_clang_cmd(source_path, output_path):
 
 
 def test_correctness(source_path, output_path):
-    gen_cpp_path = os.path.join(output_path, concti.GEN_FILE_PREAMBLE + '0' + misc.CPP_EXTENSION)
+    gen_file = os.path.join(output_path, concti.SRC_FILE_PREAMBLE + misc.CPP_EXTENSION)
     
-    temp_path = os.path.join(output_path, "src.cpp")
-    os.rename(gen_cpp_path, temp_path)
-
     src_ir_dir = os.path.join(output_path, concti.SRC_FILE_PREAMBLE)
     gen_ir_dir = os.path.join(output_path, concti.GEN_FILE_PREAMBLE)
 
@@ -132,11 +129,10 @@ def test_correctness(source_path, output_path):
     ir_from_gen = os.path.join(gen_ir_dir, concti.IR_FILE_PREAMBLE + misc.IR_EXTENSION)
 
     cmd_clang_src = get_clang_cmd(source_path, ir_from_src)
-    cmd_clang_gen = get_clang_cmd(temp_path, ir_from_gen)
+    cmd_clang_gen = get_clang_cmd(gen_file, ir_from_gen)
 
     src_proc_code, _, _ = run(cmd_clang_src)
     gen_proc_code, _, _ = run(cmd_clang_gen)
-    os.rename(temp_path, gen_cpp_path)
 
     return ir_from_src, ir_from_gen, src_proc_code, gen_proc_code
 
@@ -187,12 +183,8 @@ if __name__ == '__main__':
 
         cmd = get_transpiler_cmd(source_path, output_path, concti.FLAG_DUMMY, 0)
         
-        print(f"Running {rel_path}...")
-        
         code, out, err = run(cmd)
 
-        print(f"out={out}")
-        
         print(">> Test exited successfully.")
 
         json_test = json.loads(parse_output(out))
@@ -221,24 +213,24 @@ if __name__ == '__main__':
 
             # start testing for correctness
 
-            # start_correctness = time.time()
+            start_correctness = time.time()
             
-            # ir_from_src, ir_from_gen, src_proc_code, gen_proc_code = test_correctness(source_path, output_path)
+            ir_from_src, ir_from_gen, src_proc_code, gen_proc_code = test_correctness(source_path, output_path)
 
-            # end_correctness = time.time()
+            end_correctness = time.time()
 
-            # time_correctness = round(end_correctness - start_correctness, 3)
+            time_correctness = round(end_correctness - start_correctness, 3)
 
-            # # the clang process failed to execute, meaning correctness cannot be tested
-            # if src_proc_code == misc.EXIT_FAILURE or gen_proc_code == misc.EXIT_FAILURE:
-            #     processed_test[test.CORRECTNESS][test.SUCCESS] = False
-            #     processed_test[test.CORRECTNESS][test.TIME] = time_correctness
-            # else:            
-            #     stripped_src_ir = strip_ir(ir_from_src)
-            #     stripped_gen_ir = strip_ir(ir_from_gen)
+            # the clang process failed to execute, meaning correctness cannot be tested
+            if src_proc_code == misc.EXIT_FAILURE or gen_proc_code == misc.EXIT_FAILURE:
+                processed_test[test.CORRECTNESS][test.SUCCESS] = False
+                processed_test[test.CORRECTNESS][test.TIME] = time_correctness
+            else:            
+                stripped_src_ir = strip_ir(ir_from_src)
+                stripped_gen_ir = strip_ir(ir_from_gen)
 
-            #     processed_test[test.CORRECTNESS][test.SUCCESS] = stripped_src_ir == stripped_gen_ir
-            #     processed_test[test.CORRECTNESS][test.TIME] = time_correctness
+                processed_test[test.CORRECTNESS][test.SUCCESS] = stripped_src_ir == stripped_gen_ir
+                processed_test[test.CORRECTNESS][test.TIME] = time_correctness
                 
 
         file_path = os.path.join(output_path, "results.json")
