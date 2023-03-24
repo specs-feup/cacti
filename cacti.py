@@ -102,7 +102,6 @@ def test_idempotency(output_path, tries):
         
         gen = os.path.join(output_path, concti.GEN_FILE_PREAMBLE + str(curr_try) + misc.CPP_EXTENSION)
 
-
         if not os.path.isfile(gen):
             raise OSError(f"Error: the file {gen} could not be found.")
 
@@ -141,18 +140,30 @@ def strip_ir(ir):
     ir_file = open(ir, "r")
     lines = []
 
-    while "; Function Attrs:" not in ir_file.readline():
+    readline = ir_file.readline()
+
+    while "; Function Attrs:" not in readline:
+        if readline == '' or readline == "!llvm.module.flags":
+            break
+
+        readline = ir_file.readline()
+
         continue
 
+    print("got out ot first while loop in strip_ir")
+    
     line = ""
 
     while True:
         line = ir_file.readline()
+        print("line = ")
         
         if "!llvm.module.flags" in line:
             break
 
         lines.append(line)
+
+    print ("got out of second while loop in strip_ir")
     
     return ''.join(lines)
 
@@ -164,12 +175,18 @@ if __name__ == '__main__':
 
     WORKING_DIR = str(os.getcwd()) + '/'
     INPUT_FOLDER = WORKING_DIR + str(os.sys.argv[1]).lower()
-    print(f"WOrking DIR = {WORKING_DIR}")
+    print(f"input_folder = {INPUT_FOLDER}")
     os.getcwd()
     
     TRANSPILER = str(os.sys.argv[2]).lower()
 
-    paths = find_source_files(INPUT_FOLDER)
+    paths_c98 = find_source_files(os.path.join(INPUT_FOLDER, concti.C98_STANDARD))
+    paths_c11 = find_source_files(os.path.join(INPUT_FOLDER, concti.C11_STANDARD))
+    paths_c17 = find_source_files(os.path.join(INPUT_FOLDER, concti.C17_STANDARD))
+    paths_c20 = find_source_files(os.path.join(INPUT_FOLDER, concti.C20_STANDARD))
+    
+    paths = paths_c98 + paths_c11 + paths_c17 + paths_c20
+
     paths.sort()
 
     for source_path in paths:        
@@ -177,7 +194,9 @@ if __name__ == '__main__':
         aux_path = 'output' + rel_path[0:len(rel_path) - 7]
 
         output_path = os.path.join(INPUT_FOLDER, aux_path)
+
         print(f"output_path = {output_path}")
+        
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
@@ -191,7 +210,8 @@ if __name__ == '__main__':
 
         processed_test = process_json(json_test, err)
         
-        if test.CODE_GENERATION in processed_test and processed_test[test.CODE_GENERATION][test.SUCCESS]:                
+        if test.CODE_GENERATION in processed_test and processed_test[test.CODE_GENERATION][test.SUCCESS]:
+            print("im in idempotency test")                
             # start testing for idempotency
             time_idempotency = 0.0
             
@@ -212,11 +232,12 @@ if __name__ == '__main__':
             processed_test[test.IDEMPOTENCY][test.TIME] = time_idempotency
 
             # start testing for correctness
-
+            print("im in correctness test")
             start_correctness = time.time()
             
+            print("before test_correctness")
             ir_from_src, ir_from_gen, src_proc_code, gen_proc_code = test_correctness(source_path, output_path)
-
+            print("after test_correctness")
             end_correctness = time.time()
 
             time_correctness = round(end_correctness - start_correctness, 3)
@@ -225,17 +246,19 @@ if __name__ == '__main__':
             if src_proc_code == misc.EXIT_FAILURE or gen_proc_code == misc.EXIT_FAILURE:
                 processed_test[test.CORRECTNESS][test.SUCCESS] = False
                 processed_test[test.CORRECTNESS][test.TIME] = time_correctness
-            else:            
+            else:
+                print("before strip_ir")            
                 stripped_src_ir = strip_ir(ir_from_src)
+                print("after strip_ir")
                 stripped_gen_ir = strip_ir(ir_from_gen)
+                print("after strip_gen_ir")
 
                 processed_test[test.CORRECTNESS][test.SUCCESS] = stripped_src_ir == stripped_gen_ir
                 processed_test[test.CORRECTNESS][test.TIME] = time_correctness
-                
+        
+        print("got out of idempotency and correctness")
 
         file_path = os.path.join(output_path, "results.json")
-        
-        print("output_path = " + output_path)
 
         with open(file_path, "w+") as f:
             json.dump(processed_test, f)
