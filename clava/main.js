@@ -20,7 +20,7 @@ const CACTI_FLAG_SILENT     = '-s'
 const file = laraArgs.file;
 const outputFolder = laraArgs.outputFolder;
 const silent = laraArgs.silent;
-const idempotencyTry = laraArgs.ntry;
+const idempotencyTry = laraArgs.idempotencyTry;
 
 const genFileName = idempotencyTry == 0 ? SRC_FILE_PREAMBLE + CPP_EXTENSION : GEN_FILE_PREAMBLE + idempotencyTry + CPP_EXTENSION;
 
@@ -34,13 +34,15 @@ try {
   output.name = Io.getPath(file).getParentFile().getName();
 
   Clava.addExistingFile(file);
+
+  console.log(Query.root().dump);
 }
 catch (error) {
   output.error = "An error occurred while trying to access the source file.";
   
   console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 
-  exit(EXIT_FAILURE);
+  throw error;
 }
 
 
@@ -69,11 +71,9 @@ catch (error) {
     log: "An error occurred while trying to parse the source file."
   }
   
-  if (!(silent == CACTI_FLAG_SILENT)) {
-    console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
-  }
+  console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 
-  exit(EXIT_FAILURE);
+  throw error;
 }
 
 if (!(silent == CACTI_FLAG_SILENT))
@@ -103,17 +103,14 @@ catch (error) {
     log: "An error occurred while trying to generate source code from the input file."
   };
 
-  if (!(silent == CACTI_FLAG_SILENT))
-    console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
+  console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 
-  exit(EXIT_FAILURE);
+  throw error;
 }
 
 // update the output json with the idempotency and correctness test objects
 output.test_idempotency = {
-  success: '',
-  tries: 0,
-  time: 0
+  results: []
 };
 
 output.test_correctness = {
@@ -121,5 +118,4 @@ output.test_correctness = {
   time: 0
 };
 
-if (!(silent == CACTI_FLAG_SILENT))
-  console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
+console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
