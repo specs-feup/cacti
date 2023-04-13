@@ -1,13 +1,17 @@
 import os
 import subprocess
 
+from clava import exec
 
 class Command:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, source_path: str, output_path: str, ntry: int, flag: str) -> None:
+        self.transpiler = str(os.sys.argv[2]).lower()
 
-    def run(self, arg_list) -> tuple:
-        proc = subprocess.Popen(arg_list,
+        if self.transpiler == 'clava':
+            self.args = exec.clava(source_path, output_path, flag, ntry)
+
+    def run(self) -> tuple:
+        proc = subprocess.Popen(self.args,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 text=True)
@@ -23,4 +27,3 @@ class Command:
     
     def clang(self, source_path, output_path):
         return self.run(["clang", "-S", "-O0", "-emit-llvm", source_path, "-o", output_path])
-    
