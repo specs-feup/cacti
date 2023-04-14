@@ -115,7 +115,7 @@ class Test:
             raise OSError(f"Error: the file {gen_file} could not be found")
 
         end = time.time()
-
+        
         return stdout, stderr, src_file, gen_file, round(end - start, 3)
 
     def idempotency(self) -> None:
