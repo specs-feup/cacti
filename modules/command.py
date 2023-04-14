@@ -4,14 +4,15 @@ import subprocess
 from clava import exec
 
 class Command:
-    def __init__(self, source_path: str, output_path: str, ntry: int, flag: str) -> None:
+    def __init__(self, params: dict) -> None:
         self.transpiler = str(os.sys.argv[2]).lower()
-
+        self.params = params
+        
         if self.transpiler == 'clava':
-            self.args = exec.clava(source_path, output_path, flag, ntry)
+            self.cmd = exec.clava(self.params)
 
     def run(self) -> tuple:
-        proc = subprocess.Popen(self.args,
+        proc = subprocess.Popen(self.cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 text=True)
