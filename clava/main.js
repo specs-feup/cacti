@@ -13,16 +13,18 @@ const CPP_EXTENSION = '.cpp';
 // CACTI constants
 const CACTI_DELIMITER_BEGIN = 'CACTI_OUTPUT_BEGIN';
 const CACTI_DELIMITER_END   = 'CACTI_OUTPUT_END';
-const CACTI_FLAG_SILENT     = '-s'
-
 
 // lara arguments
 const file = laraArgs.file;
-const outputFolder = laraArgs.outputFolder;
-const silent = laraArgs.silent;
-const idempotencyTry = laraArgs.idempotencyTry;
+const outputFolder = laraArgs.output_folder;
+const idempotencyTry = laraArgs.curr_try;
+const debugMode = laraArgs.debug_mode;
+
+
+// change idempotencyTry name 
 
 const genFileName = idempotencyTry == 0 ? SRC_FILE_PREAMBLE + CPP_EXTENSION : GEN_FILE_PREAMBLE + idempotencyTry + CPP_EXTENSION;
+
 
 let output = {};
 
@@ -76,7 +78,7 @@ catch (error) {
   throw error;
 }
 
-if (!(silent == CACTI_FLAG_SILENT))
+if (debugMode == false)
   Io.deleteFolderContents(outputFolder)
 
 // test the code generation
@@ -106,17 +108,16 @@ catch (error) {
   console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 
   throw error;
-} 
-
-if (!(silent == CACTI_FLAG_SILENT)) {
-  output.test_idempotency = {
-    results: []
-  };
-  
-  output.test_correctness = {
-    success: '',
-    time: 0
-  };
 }
+
+output.test_idempotency = {
+  results: [],
+  success: ''
+};
+
+output.test_correctness = {
+  success: '',
+  time: 0
+};
 
 console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);

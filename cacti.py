@@ -61,16 +61,8 @@ if __name__ == '__main__':
             os.makedirs(output_path)
         
         test = module_test.Test(source_path, output_path, 0)
-        command = module_command.Command({"file": source_path, "outputFolder": output_path,
-                                          "idempotencyTry": '0', "silent": 'DUMMY'})
 
-        code, out, err = command.run()
-
-        test.process(out, err)
-
-        if test.contains('test_code_generation') and test.success('test_code_generation'):
-            test.idempotency()
-
+        test.execute()
 
         print(test)
 

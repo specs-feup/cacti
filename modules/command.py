@@ -26,5 +26,5 @@ class Command:
     def diff(self, file1, file2):
         return self.run(["diff", file1, file2])
     
-    def clang(self, source_path, output_path):
-        return self.run(["clang", "-S", "-O0", "-emit-llvm", source_path, "-o", output_path])
+    def emit_llvm(self, source_path: str, output_path: str, o_flag: str) -> str:
+        return self.run(["clang", "-S", o_flag, "-emit-llvm", source_path, "-o", output_path])
