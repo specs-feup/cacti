@@ -10,12 +10,9 @@ from colorama import Fore
 from modules import test as module_test
 from modules import command as module_command
 
-from constants import const_cacti as concti
-from constants import const_misc  as misc
-
 
 def find_source_files(root):
-    return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith(misc.CPP_EXTENSION)]
+    return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith('.cpp')]
     """Fetches all the C++ source files to be tested by CACTI.
     
     Args:
@@ -32,17 +29,17 @@ def find_source_files(root):
 if __name__ == '__main__':
     if (len(os.sys.argv) < 3):
         print("Usage:\n$ python3 cacti.py <test_folder> <transpiler>")
-        exit(misc.EXIT_FAILURE)
+        exit(1)
 
     WORKING_DIR = str(os.getcwd()) + '/'
     INPUT_FOLDER = WORKING_DIR + str(os.sys.argv[1]).lower()
     
     TRANSPILER = str(os.sys.argv[2]).lower()
 
-    paths_c98 = find_source_files(os.path.join(INPUT_FOLDER, concti.C98_STANDARD))
-    paths_c11 = find_source_files(os.path.join(INPUT_FOLDER, concti.C11_STANDARD))
-    paths_c17 = find_source_files(os.path.join(INPUT_FOLDER, concti.C17_STANDARD))
-    paths_c20 = find_source_files(os.path.join(INPUT_FOLDER, concti.C20_STANDARD))
+    paths_c98 = find_source_files(os.path.join(INPUT_FOLDER, 'C++98'))
+    paths_c11 = find_source_files(os.path.join(INPUT_FOLDER, 'C++11'))
+    paths_c17 = find_source_files(os.path.join(INPUT_FOLDER, 'C++17'))
+    paths_c20 = find_source_files(os.path.join(INPUT_FOLDER, 'C++20'))
 
     paths = paths_c98 + paths_c11 + paths_c17 + paths_c20
 

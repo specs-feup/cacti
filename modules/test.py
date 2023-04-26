@@ -53,6 +53,9 @@ LLVM_O2 = str('-O2')
 LLVM_O3 = str('-O3')
 
 
+PREFIX_IR_METADATA = '!'
+
+
 class Test:
     def __init__(self, source_path: str, output_path: str, curr_try: int) -> None:
         self.source_path = source_path
@@ -109,7 +112,7 @@ class Test:
         # if both succeeded, test idempotency and correctness
         if self.contains(TEST_CODEGEN) and self.success(TEST_CODEGEN):
             self.idempotency()
-            # self.correctness()
+            self.correctness()
 
     def parse_output(self, output: str) -> str:
         _, _, after = output.partition('CACTI_OUTPUT_BEGIN')
@@ -211,8 +214,66 @@ class Test:
         self.results[TEST_IDEMPOTENCY][RESULTS] = subtests
         self.results[TEST_IDEMPOTENCY][SUCCESS] = success
 
-    def correctness(self) -> bool:
-        pass
+    def strip_ir(self, ir: str) -> str:
+        ir_file = open(ir, 'r')
+
+        lines = []
+
+        readline = ir_file.readline() 
+
+        while 'target triple' not in readline:
+            readline = ir_file.readline()
+
+            continue
+        
+        line = ''
+
+        while True:
+            # check for EOF
+            if not line:
+                break
+            
+            # check for metadata
+            if line.startswith(PREFIX_IR_METADATA):
+                continue
+
+            # read the next line and append it to lines
+            line = ir_file.readline()
+        
+            lines.append(line)
+
+        return ''.join(lines)
+
+
+    def correctness(self) -> None:
+        start = time.time()
+
+        gen_file_path = os.path.join(self.output_path, 'src.cpp')
+
+        ir_from_src = os.path.join(self.output_path, 'src.ll')
+        ir_from_gen = os.path.join(self.output_path, 'gen.ll')
+
+        src_ir_cmd = self.cmd.emit_llvm(self.source_path, ir_from_src, LLVM_O0)
+        self.cmd.cmd = src_ir_cmd
+        src_proc_code, _, _ = self.cmd.run()
+
+        gen_ir_cmd = self.cmd.emit_llvm(gen_file_path, ir_from_gen, LLVM_O0)
+        self.cmd.cmd = gen_ir_cmd
+        gen_proc_code, _, _ = self.cmd.run()
+
+        end = time.time()
+
+        time_correctness = round(start - end, 3)
+
+        if src_proc_code == 1 or gen_proc_code == 1:
+            self.results[TEST_CORRECTNESS][SUCCESS] = False
+            self.results[TEST_CORRECTNESS][TIME] = time_correctness
+        else:
+            stripped_src_ir = self.strip_ir(ir_from_src)
+            stripped_gen_ir = self.strip_ir(ir_from_gen)
+
+            self.results[TEST_CORRECTNESS][SUCCESS] = (stripped_src_ir == stripped_gen_ir)
+            self.results[TEST_CORRECTNESS][TIME] = time_correctness
 
     def save(self) -> None:
         results_path = os.path.join(self.output_path, 'results.json')
