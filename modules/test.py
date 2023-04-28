@@ -170,7 +170,6 @@ class Test:
 
         success = True
 
-        print('im testing the idempotency')
         # turn on debug mode
         self.cmd.params[PARAMS_DEBUG] = DEBUG_ON
 
