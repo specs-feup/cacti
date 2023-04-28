@@ -170,20 +170,23 @@ class Test:
 
         success = True
 
+        print('im testing the idempotency')
         # turn on debug mode
         self.cmd.params[PARAMS_DEBUG] = DEBUG_ON
 
         while True:
             if self.curr_try > IDEMPOTENCY_DEPTH:
+                print('too many tries')
                 success = False
                 break
 
             try:
                 out, err, src, gen, time = self.idempotency_iteration()
+            
             except OSError:
                 success = False
                 break
-
+            
             temp_test = json.loads(self.parse_output(out))
 
             # remove unnecessary information from the test
@@ -253,17 +256,13 @@ class Test:
         ir_from_src = os.path.join(self.output_path, 'src.ll')
         ir_from_gen = os.path.join(self.output_path, 'gen.ll')
 
-        src_ir_cmd = self.cmd.emit_llvm(self.source_path, ir_from_src, LLVM_O0)
-        self.cmd.cmd = src_ir_cmd
-        src_proc_code, _, _ = self.cmd.run()
+        src_proc_code, _, _ = self.cmd.emit_llvm(self.source_path, ir_from_src, LLVM_O0)
 
-        gen_ir_cmd = self.cmd.emit_llvm(gen_file_path, ir_from_gen, LLVM_O0)
-        self.cmd.cmd = gen_ir_cmd
-        gen_proc_code, _, _ = self.cmd.run()
+        gen_proc_code, _, _ = self.cmd.emit_llvm(gen_file_path, ir_from_gen, LLVM_O0)
 
         end = time.time()
 
-        time_correctness = round(start - end, 3)
+        time_correctness = round(end - start, 3)
 
         if src_proc_code == 1 or gen_proc_code == 1:
             self.results[TEST_CORRECTNESS][SUCCESS] = False

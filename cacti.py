@@ -3,6 +3,7 @@ import json
 import time
 import os
 import filecmp
+import argparse
 
 from clava import exec
 from colorama import Fore
@@ -11,7 +12,7 @@ from modules import test as module_test
 from modules import command as module_command
 
 
-def find_source_files(root):
+def find_source_files(root: str):
     return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith('.cpp')]
     """Fetches all the C++ source files to be tested by CACTI.
     
@@ -26,10 +27,19 @@ def find_source_files(root):
     """
 
 
+def parse_argv() -> None:
+    parser = argparse.ArgumentParser(description='CACTI')
+
+    parser.add_argument('-')
+        
+    return
+
+
 if __name__ == '__main__':
     if (len(os.sys.argv) < 3):
         print("Usage:\n$ python3 cacti.py <test_folder> <transpiler>")
         exit(1)
+
 
     WORKING_DIR = str(os.getcwd()) + '/'
     INPUT_FOLDER = WORKING_DIR + str(os.sys.argv[1]).lower()

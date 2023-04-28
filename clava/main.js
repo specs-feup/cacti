@@ -20,11 +20,17 @@ const outputFolder = laraArgs.output_folder;
 const idempotencyTry = laraArgs.curr_try;
 const debugMode = laraArgs.debug_mode;
 
+console.log('\ntry='+idempotencyTry+'\n');
+
+if (debugMode) {
+  console.log("The script was called in debug mode.")
+}
 
 // change idempotencyTry name 
 
 const genFileName = idempotencyTry == 0 ? SRC_FILE_PREAMBLE + CPP_EXTENSION : GEN_FILE_PREAMBLE + idempotencyTry + CPP_EXTENSION;
 
+console.log("genfilename = " + genFileName);
 
 let output = {};
 
@@ -38,10 +44,13 @@ try {
   Clava.addExistingFile(file);
 
   console.log(Query.root().dump);
+
+  console.log('SUCCESS: I accessed the source file');
 }
 catch (error) {
   output.error = "An error occurred while trying to access the source file.";
   
+  console.log('ERROR: I could not access the source file');
   console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 
   throw error;
@@ -59,6 +68,8 @@ try {
   if (allFilesParsed === false) 
     throw new Error("An error occurred while trying to parse the source file.");
 
+  console.log('SUCCESS: I parsed the source file');
+
   const time = (end - start)/1000.0
 
   output.test_parsing = {
@@ -72,7 +83,7 @@ catch (error) {
     success: false,
     log: "An error occurred while trying to parse the source file."
   }
-  
+  console.log('ERROR: I could not parse the source file');
   console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 
   throw error;
@@ -89,6 +100,7 @@ try {
   Clava.writeCode(outputFolder);
   Clava.popAst();
 
+  console.log('SUCCESS: I generated the code')
   const end = Date.now();
 
   const time = (end - start)/1000.0;
@@ -105,6 +117,7 @@ catch (error) {
     log: "An error occurred while trying to generate source code from the input file."
   };
 
+  console.log('ERROR: I could not generate the code')
   console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 
   throw error;
