@@ -4,7 +4,6 @@ import time
 import filecmp
 
 from modules.command import *
-from modules.exception import InvalidTranspiler
 
 from colorama import Fore
 
@@ -63,7 +62,7 @@ class Test:
         self.output_path = output_path
         self.curr_try = curr_try
         
-        self.cmd = command.Command({
+        self.cmd = Command({
             PARAMS_FILE : self.source_path,
             PARAMS_OUTPUT_FOLDER : self.output_path,
             PARAMS_CURR_TRY : str(self.curr_try),
@@ -78,26 +77,26 @@ class Test:
         idempotency = MSG_NA
         correctness = MSG_NA
 
-        if self.contains(TEST_PARSING):
-            if self.success(TEST_PARSING):
+        if self.contains(KEY_TEST_PARSING):
+            if self.success(KEY_TEST_PARSING):
                 parsing = MSG_SUCCESS
             else:
                 parsing = MSG_ERROR
 
-        if self.contains(TEST_CODEGEN):
-            if self.success(TEST_CODEGEN):
+        if self.contains(KEY_TEST_CODEGEN):
+            if self.success(KEY_TEST_CODEGEN):
                 codegen = MSG_SUCCESS
             else:
                 codegen = MSG_ERROR
 
-        if self.contains(TEST_IDEMPOTENCY):
-            if self.success(TEST_IDEMPOTENCY):
+        if self.contains(KEY_TEST_IDEMPOTENCY):
+            if self.success(KEY_TEST_IDEMPOTENCY):
                 idempotency = MSG_SUCCESS
             else:
                 idempotency = MSG_ERROR
 
-        if self.contains(TEST_CORRECTNESS):
-            if self.success(TEST_CORRECTNESS):
+        if self.contains(KEY_TEST_CORRECTNESS):
+            if self.success(KEY_TEST_CORRECTNESS):
                 correctness = MSG_SUCCESS
             else:
                 correctness = MSG_ERROR
@@ -111,7 +110,7 @@ class Test:
         self.process(out, err)
 
         # if both succeeded, test idempotency and correctness
-        if self.contains(TEST_CODEGEN) and self.success(TEST_CODEGEN):
+        if self.contains(KEY_TEST_CODEGEN) and self.success(KEY_TEST_CODEGEN):
             self.idempotency()
             self.correctness()
 
@@ -127,18 +126,18 @@ class Test:
         self.results = json.loads(json_data)
 
         # if the parsing failed, modify the json object to contain information about the error
-        if not self.results[TEST_PARSING][SUCCESS]:
-            self.results[TEST_PARSING][LOG] = err
+        if not self.results[KEY_TEST_PARSING][KEY_SUCCESS]:
+            self.results[KEY_TEST_PARSING][KEY_LOG] = err
 
         # if the code generation failed, modify the json object to contain information about the error
-        elif not self.results[TEST_CODEGEN][SUCCESS]:
-            self.results[TEST_CODEGEN][LOG] = err
+        elif not self.results[KEY_TEST_CODEGEN][KEY_SUCCESS]:
+            self.results[KEY_TEST_CODEGEN][KEY_LOG] = err
 
     def contains(self, test_kind: str) -> bool:
         return test_kind in self.results.keys()
 
     def success(self, test_kind: str) -> bool:
-        return self.results[test_kind][SUCCESS]
+        return self.results[test_kind][KEY_SUCCESS]
 
     def idempotency_iteration(self) -> tuple:
         start = time.time()
@@ -190,20 +189,20 @@ class Test:
             temp_test = json.loads(self.parse_output(out))
 
             # remove unnecessary information from the test
-            temp_test.pop(TEST_IDEMPOTENCY)
-            temp_test.pop(TEST_CORRECTNESS)
+            temp_test.pop(KEY_TEST_IDEMPOTENCY)
+            temp_test.pop(KEY_TEST_CORRECTNESS)
 
-            if not temp_test[TEST_PARSING][SUCCESS]:
-                temp_test[TEST_PARSING][LOG] = err
-            elif not temp_test[TEST_CODEGEN][SUCCESS]:
-                temp_test[TEST_CODEGEN][LOG] = err
+            if not temp_test[KEY_TEST_PARSING][KEY_SUCCESS]:
+                temp_test[KEY_TEST_PARSING][KEY_LOG] = err
+            elif not temp_test[KEY_TEST_CODEGEN][KEY_SUCCESS]:
+                temp_test[KEY_TEST_CODEGEN][KEY_LOG] = err
 
             equals = filecmp.cmp(src, gen)
 
-            temp_test[SRC] = src
-            temp_test[GEN] = gen
-            temp_test[EQUALS] = equals
-            temp_test[TIME] = time
+            temp_test[KEY_SRC] = src
+            temp_test[KEY_GEN] = gen
+            temp_test[KEY_EQUALS] = equals
+            temp_test[KEY_TIME] = time
 
             subtests.append(temp_test)
 
@@ -214,8 +213,8 @@ class Test:
         # turn off debug mode
         self.cmd.params[PARAMS_DEBUG] = DEBUG_OFF
 
-        self.results[TEST_IDEMPOTENCY][RESULTS] = subtests
-        self.results[TEST_IDEMPOTENCY][SUCCESS] = success
+        self.results[KEY_TEST_IDEMPOTENCY][KEY_RESULTS] = subtests
+        self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
 
     def strip_ir(self, ir: str) -> str:
         ir_file = open(ir, 'r')
@@ -265,17 +264,18 @@ class Test:
         time_correctness = round(end - start, 3)
 
         if src_proc_code == 1 or gen_proc_code == 1:
-            self.results[TEST_CORRECTNESS][SUCCESS] = False
-            self.results[TEST_CORRECTNESS][TIME] = time_correctness
+            self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = False
+            self.results[KEY_TEST_CORRECTNESS][KEY_TIME] = time_correctness
         else:
             stripped_src_ir = self.strip_ir(ir_from_src)
             stripped_gen_ir = self.strip_ir(ir_from_gen)
 
-            self.results[TEST_CORRECTNESS][SUCCESS] = (stripped_src_ir == stripped_gen_ir)
-            self.results[TEST_CORRECTNESS][TIME] = time_correctness
+            self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = (stripped_src_ir == stripped_gen_ir)
+            self.results[KEY_TEST_CORRECTNESS][KEY_TIME] = time_correctness
 
     def save(self) -> None:
         results_path = os.path.join(self.output_path, 'results.json')
 
         with open(results_path, 'w+') as f:
             json.dump(self.results, f)
+    

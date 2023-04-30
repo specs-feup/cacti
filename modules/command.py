@@ -1,6 +1,7 @@
 import subprocess
 
 from clava import exec
+from modules.exception import InvalidTranspiler
 
 
 def diff(file1: str, file2: str) -> list:
@@ -14,8 +15,9 @@ def emit_llvm(source: str, output: str, o_flag: str) -> list:
 def transpiler_cmd(transpiler: str, params: dict) -> list:
     if transpiler == 'clava':
         return exec.clava(params)
-    
-    raise 
+
+    raise InvalidTranspiler('Invalid transpiler')
+
 
 class Command:
     def __init__(self, args: str) -> None:
