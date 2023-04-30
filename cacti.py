@@ -26,15 +26,6 @@ def find_source_files(root: str):
         This method does not raise any exception.
     """
 
-
-def parse_argv() -> None:
-    parser = argparse.ArgumentParser(description='CACTI')
-
-    parser.add_argument('-')
-        
-    return
-
-
 if __name__ == '__main__':
     if (len(os.sys.argv) < 3):
         print("Usage:\n$ python3 cacti.py <test_folder> <transpiler>")
