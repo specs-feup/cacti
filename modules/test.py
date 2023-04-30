@@ -2,26 +2,26 @@ import os
 import json
 import time
 import filecmp
-import termcolor
 
-from modules import command
+from modules.command import *
+from modules.exception import InvalidTranspiler
 
 from colorama import Fore
 
 
 # Constants that represent Keys in the output JSON
 
-TEST_PARSING = str('test_parsing')
-TEST_CODEGEN = str('test_code_generation')
-TEST_IDEMPOTENCY = str('test_idempotency')
-TEST_CORRECTNESS = str('test_correctness')
-SUCCESS = str('success')
-LOG = str('log')
-SRC = str('src')
-GEN = str('gen')
-EQUALS = str('equals')
-TIME = str('time')
-RESULTS = str('results')
+KEY_TEST_PARSING = str('test_parsing')
+KEY_TEST_CODEGEN = str('test_code_generation')
+KEY_TEST_IDEMPOTENCY = str('test_idempotency')
+KEY_TEST_CORRECTNESS = str('test_correctness')
+KEY_SUCCESS = str('success')
+KEY_LOG = str('log')
+KEY_SRC = str('src')
+KEY_GEN = str('gen')
+KEY_EQUALS = str('equals')
+KEY_TIME = str('time')
+KEY_RESULTS = str('results')
 
 
 # Constants that represent Keys in the parameters dictionary
