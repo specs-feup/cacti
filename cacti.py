@@ -1,16 +1,7 @@
-import subprocess
-import json
-import time
 import os
-import filecmp
-import argparse
 
-from clava import exec
-from colorama import Fore
-
-from modules import test as module_test
-from modules import command as module_command
-
+from modules.test import *
+from modules.command import *
 
 def find_source_files(root: str):
     return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith('.cpp')]
@@ -58,7 +49,7 @@ if __name__ == '__main__':
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         
-        test = module_test.Test(source_path, output_path, 0)
+        test = Test(source_path, output_path, 0)
 
         test.execute()
 

@@ -1,12 +1,13 @@
 import os
-import sys
 import json
 import time
 import filecmp
+import termcolor
 
 from modules import command
 
 from colorama import Fore
+
 
 # Constants that represent Keys in the output JSON
 
