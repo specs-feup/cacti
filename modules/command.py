@@ -16,7 +16,7 @@ def transpiler_cmd(transpiler: str, params: dict) -> list:
     if transpiler == 'clava':
         return exec.clava(params)
 
-    raise InvalidTranspiler('Invalid transpiler')
+    raise InvalidTranspiler('Invalid transpiler: ' + transpiler)
 
 
 class Command:

@@ -278,4 +278,3 @@ class Test:
 
         with open(results_path, 'w+') as f:
             json.dump(self.results, f)
-    
