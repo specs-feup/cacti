@@ -16,7 +16,31 @@ class CorrectnessHandler:
         self.output_path = output_path
 
     def strip_ir(self, ir: str) -> str:
-        return ""
+        ir_file = open(ir, 'r')
+
+        lines = []
+
+        readline = ir_file.readline()
+
+        while 'target triple' not in readline:
+            readline = ir_file.readline()
+
+            continue
+
+        line = ''
+
+        while True:
+            if not line:
+                break
+
+            if line.startswith("!"):
+                continue
+            
+            line = ir_file.readline()
+
+            lines.append(line)
+
+        return ''.join(lines)
 
     def run(self) -> None:
         start = time.time()
