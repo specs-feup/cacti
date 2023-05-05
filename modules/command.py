@@ -11,8 +11,9 @@ def diff(file1: str, file2: str) -> list:
 def emit_llvm(source: str, output: str, o_flag: str) -> list:
     return ["clang", "-S", source, "-emit-llvm", o_flag, "-o", output]
 
-
+# generalizar chamada do transpilador, fazer import inline
 def transpiler_cmd(transpiler: str, params: dict) -> list:
+
     if transpiler == 'clava':
         return exec.clava(params)
 

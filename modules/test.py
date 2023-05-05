@@ -5,6 +5,9 @@ import filecmp
 
 from modules.command import *
 
+from modules.handlers.idempotency import IdempotencyHandler
+from modules.handlers.correctness import CorrectnessHandler
+
 from colorama import Fore
 
 
@@ -62,12 +65,12 @@ class Test:
         self.output_path = output_path
         self.curr_try = curr_try
         
-        self.cmd = Command({
+        self.params = {
             PARAMS_FILE : self.source_path,
             PARAMS_OUTPUT_FOLDER : self.output_path,
             PARAMS_CURR_TRY : str(self.curr_try),
             PARAMS_DEBUG : DEBUG_OFF
-        })
+        }
         
         self.results = dict()
 
@@ -138,140 +141,22 @@ class Test:
 
     def success(self, test_kind: str) -> bool:
         return self.results[test_kind][KEY_SUCCESS]
-
-    def idempotency_iteration(self) -> tuple:
-        start = time.time()
-
-        src_name = 'gen' + str(self.curr_try) + '.cpp'
-
-        if self.curr_try == 0:
-            src_name = 'src.cpp'
-
-        src_file = os.path.join(self.output_path, src_name)
-
-        self.curr_try += 1
-
-        self.cmd.params[PARAMS_CURR_TRY] = str(self.curr_try)
-
-        _, stdout, stderr = self.cmd.run()
-
-        gen_file = os.path.join(
-            self.output_path, 'gen' + str(self.curr_try) + '.cpp')
-
-        if not os.path.isfile(gen_file):
-            raise OSError(f"Error: the file {gen_file} could not be found!")
-
-        end = time.time()
-
-        return stdout, stderr, src_file, gen_file, round(end - start, 3)
-
+    
     def idempotency(self) -> None:
-        subtests = []
+        handler = IdempotencyHandler(self.output_path, self.params)
 
-        success = True
-
-        # turn on debug mode
-        self.cmd.params[PARAMS_DEBUG] = DEBUG_ON
-
-        while True:
-            if self.curr_try > IDEMPOTENCY_DEPTH:
-                print('too many tries')
-                success = False
-                break
-
-            try:
-                out, err, src, gen, time = self.idempotency_iteration()
-            
-            except OSError:
-                success = False
-                break
-            
-            temp_test = json.loads(self.parse_output(out))
-
-            # remove unnecessary information from the test
-            temp_test.pop(KEY_TEST_IDEMPOTENCY)
-            temp_test.pop(KEY_TEST_CORRECTNESS)
-
-            if not temp_test[KEY_TEST_PARSING][KEY_SUCCESS]:
-                temp_test[KEY_TEST_PARSING][KEY_LOG] = err
-            elif not temp_test[KEY_TEST_CODEGEN][KEY_SUCCESS]:
-                temp_test[KEY_TEST_CODEGEN][KEY_LOG] = err
-
-            equals = filecmp.cmp(src, gen)
-
-            temp_test[KEY_SRC] = src
-            temp_test[KEY_GEN] = gen
-            temp_test[KEY_EQUALS] = equals
-            temp_test[KEY_TIME] = time
-
-            subtests.append(temp_test)
-
-            if equals:
-                success = True
-                break
-
-        # turn off debug mode
-        self.cmd.params[PARAMS_DEBUG] = DEBUG_OFF
+        subtests, success = handler.run()
 
         self.results[KEY_TEST_IDEMPOTENCY][KEY_RESULTS] = subtests
         self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
-
-    def strip_ir(self, ir: str) -> str:
-        ir_file = open(ir, 'r')
-
-        lines = []
-
-        readline = ir_file.readline() 
-
-        while 'target triple' not in readline:
-            readline = ir_file.readline()
-
-            continue
-        
-        line = ''
-
-        while True:
-            # check for EOF
-            if not line:
-                break
-            
-            # check for metadata
-            if line.startswith(PREFIX_IR_METADATA):
-                continue
-
-            # read the next line and append it to lines
-            line = ir_file.readline()
-        
-            lines.append(line)
-
-        return ''.join(lines)
-
-
+    
     def correctness(self) -> None:
-        start = time.time()
+        handler = CorrectnessHandler(self.source_path, self.output_path)
 
-        gen_file_path = os.path.join(self.output_path, 'src.cpp')
+        success, elapsed = handler.run()
 
-        ir_from_src = os.path.join(self.output_path, 'src.ll')
-        ir_from_gen = os.path.join(self.output_path, 'gen.ll')
-
-        src_proc_code, _, _ = self.cmd.emit_llvm(self.source_path, ir_from_src, LLVM_O0)
-
-        gen_proc_code, _, _ = self.cmd.emit_llvm(gen_file_path, ir_from_gen, LLVM_O0)
-
-        end = time.time()
-
-        time_correctness = round(end - start, 3)
-
-        if src_proc_code == 1 or gen_proc_code == 1:
-            self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = False
-            self.results[KEY_TEST_CORRECTNESS][KEY_TIME] = time_correctness
-        else:
-            stripped_src_ir = self.strip_ir(ir_from_src)
-            stripped_gen_ir = self.strip_ir(ir_from_gen)
-
-            self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = (stripped_src_ir == stripped_gen_ir)
-            self.results[KEY_TEST_CORRECTNESS][KEY_TIME] = time_correctness
+        self.results[KEY_TEST_CORRECTNESS][KEY_TIME] = elapsed
+        self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = success
 
     def save(self) -> None:
         results_path = os.path.join(self.output_path, 'results.json')
