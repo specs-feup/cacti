@@ -34,21 +34,21 @@ class IdempotencyHandler:
     def __init__(self, output_path: str, params: dict) -> None:
         self.params = params
         self.output_path = output_path
-        self.transpiler = os.argv[2]
+        self.transpiler = str(os.sys.argv[2]).lower()
         self.curr_try = 0
 
     def get_filename(self) -> str:
         if self.curr_try == 0:
             return 'src.cpp'
-        
+
         return 'gen' + str(self.curr_try) + '.cpp'
-    
+
     def parse_output(self, output: str) -> str:
         _, _, after = output.partition('CACTI_OUTPUT_BEGIN')
         json_data, _, after = after.partition('CACTI_OUTPUT_END')
 
         return json_data
-    
+
     def iteration(self) -> tuple:
         start = time.time()
 
@@ -68,10 +68,10 @@ class IdempotencyHandler:
             raise OSError(f"Error: the file {gen} could not be found!")
 
         end = time.time()
-        
+
         return stdout, stderr, src, gen, round(end - start, 3)
 
-    def run(self) -> None:
+    def run(self) -> tuple:
         subtests = []
 
         success = True
@@ -88,7 +88,7 @@ class IdempotencyHandler:
             except OSError:
                 success = False
                 break
-            
+
             temp_test = json.loads(self.parse_output(out))
 
             temp_test.pop(KEY_TEST_IDEMPOTENCY)
