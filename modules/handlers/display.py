@@ -15,7 +15,8 @@ INDENT = 4 * ' '
 
 
 class DisplayHandler:
-    def __init__(self, test: dict) -> None:
+    def __init__(self, path: str, test: dict) -> None:
+        self.path = path
         self.test = test
 
     def test_passed(self, test: str, time: float) -> str:
@@ -26,6 +27,9 @@ class DisplayHandler:
 
     def test_unknown(self, test: str) -> str:
         return f"{2*INDENT}{SQUARE} {test} was not run"
+    
+    def formatted_path(self) -> str:
+        return Fore.WHITE + Style.BRIGHT + self.path + Style.RESET_ALL
 
     def test_results(self, passed: int, failed: int) -> tuple:
         passed_str = CHECKMARK + " " + Style.BRIGHT + \
@@ -46,6 +50,8 @@ class DisplayHandler:
         codegen = self.test_unknown('codegen')
         idempotency = self.test_unknown('idempotency')
         correctness = self.test_unknown('correctness')
+
+        fpath = self.formatted_path()
 
         passed = 0
         failed = 0
@@ -84,3 +90,19 @@ class DisplayHandler:
 
         num_passed, num_failed = self.test_results(passed, failed)
 
+        print(fpath)
+        
+        print(f"{INDENT}parsing")
+        print(parsing)
+
+        print(f"{INDENT}code generation")
+        print(codegen)
+
+        print(f"{INDENT}idempotency")
+        print(idempotency)
+
+        print(f"{INDENT}correctness")
+        print(correctness)
+
+        print(num_passed)
+        print(num_failed)
