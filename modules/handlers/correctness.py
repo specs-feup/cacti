@@ -47,26 +47,28 @@ class CorrectnessHandler:
 
         gen_path = os.path.join(self.output_path, 'src.cpp')
         
-        print("before")
         ir_from_src = os.path.join(self.output_path, 'src.ll')
         ir_from_gen = os.path.join(self.output_path, 'gen.ll')
 
-        src_ir_cmd = Command(emit_llvm(self.source_path, self.output_path, LLVM_O0))
-        gen_ir_cmd = Command(emit_llvm(gen_path, self.output_path, LLVM_O0))
+        src_ir_cmd = Command(emit_llvm(self.source_path, ir_from_src, LLVM_O0))
+        gen_ir_cmd = Command(emit_llvm(gen_path, ir_from_gen, LLVM_O0))
 
         src_proc_code, _, _ = src_ir_cmd.run()
         gen_proc_code, _, _ = gen_ir_cmd.run()
 
         end = time.time()
 
-        elapsed = round(start - end, 3)
+        elapsed = round(end - start, 3)
 
         # emit_llvm failed to execute
-        if (src_proc_code == 1) or (gen_proc_code == 1):
+        if (src_proc_code != 0) or (gen_proc_code != 0):
             return False, elapsed
         
         stripped_src_ir = self.strip_ir(ir_from_src)
         stripped_gen_ir = self.strip_ir(ir_from_gen)
+
+        print(f"stripped_src_ir: {stripped_src_ir}")
+        print(f"stripped_gen_ir: {stripped_gen_ir}")
 
         success = stripped_src_ir == stripped_gen_ir
 

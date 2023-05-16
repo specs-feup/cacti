@@ -42,9 +42,6 @@ if __name__ == '__main__':
     path = args.path
     trsp = args.transpiler
 
-    print(path)
-    print(trsp)
-
     TRANSPILER = str(trsp).lower()
 
     paths_c98 = find_source_files(os.path.join(INPUT_FOLDER, 'C++98'))

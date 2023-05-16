@@ -53,8 +53,10 @@ class IdempotencyHandler:
         start = time.time()
 
         src = os.path.join(self.output_path, self.get_filename())
-
+        
         self.curr_try += 1
+
+        self.params[PARAMS_CURR_TRY] = str(self.curr_try)
 
         args = transpiler_cmd(self.transpiler, self.params)
 
@@ -90,7 +92,7 @@ class IdempotencyHandler:
                 break
 
             temp_test = json.loads(self.parse_output(out))
-
+            
             temp_test.pop(KEY_TEST_IDEMPOTENCY)
             temp_test.pop(KEY_TEST_CORRECTNESS)
 
@@ -114,4 +116,5 @@ class IdempotencyHandler:
 
         self.params[PARAMS_DEBUG] = DEBUG_OFF
 
+        print(f"subtests: {subtests}")
         return subtests, success
