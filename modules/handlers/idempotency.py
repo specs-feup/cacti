@@ -116,5 +116,4 @@ class IdempotencyHandler:
 
         self.params[PARAMS_DEBUG] = DEBUG_OFF
 
-        print(f"subtests: {subtests}")
         return subtests, success
