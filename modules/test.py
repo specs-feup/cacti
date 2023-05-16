@@ -7,6 +7,7 @@ from modules.command import *
 
 from modules.handlers.idempotency import IdempotencyHandler
 from modules.handlers.correctness import CorrectnessHandler
+from modules.handlers.display import DisplayHandler
 
 from colorama import Fore
 
@@ -30,6 +31,7 @@ KEY_RESULTS = str('results')
 
 PARAMS_FILE = str("file")
 PARAMS_OUTPUT_FOLDER = str("output_folder")
+PARAMS_TRANSPILER = str("transpiler")
 PARAMS_CURR_TRY = str("curr_try")
 PARAMS_DEBUG = str("debug_mode")
 
@@ -60,55 +62,33 @@ PREFIX_IR_METADATA = '!'
 
 
 class Test:
-    def __init__(self, source_path: str, output_path: str, curr_try: int) -> None:
+    def __init__(self, source_path: str, output_path: str, transpiler: str, curr_try: int) -> None:
         self.source_path = source_path
         self.output_path = output_path
         self.curr_try = curr_try
-        
+
         self.params = {
-            PARAMS_FILE : self.source_path,
-            PARAMS_OUTPUT_FOLDER : self.output_path,
-            PARAMS_CURR_TRY : str(self.curr_try),
-            PARAMS_DEBUG : DEBUG_OFF
+            PARAMS_FILE: self.source_path,
+            PARAMS_OUTPUT_FOLDER: self.output_path,
+            PARAMS_TRANSPILER: transpiler,
+            PARAMS_CURR_TRY: str(self.curr_try),
+            PARAMS_DEBUG: DEBUG_OFF
         }
-        
+
         self.results = dict()
 
-    def __str__(self) -> str:
-        parsing = MSG_NA
-        codegen = MSG_NA
-        idempotency = MSG_NA
-        correctness = MSG_NA
+    def print(self) -> None:
+        handler = DisplayHandler(self.source_path, self.results)
 
-        if self.contains(KEY_TEST_PARSING):
-            if self.success(KEY_TEST_PARSING):
-                parsing = MSG_SUCCESS
-            else:
-                parsing = MSG_ERROR
-
-        if self.contains(KEY_TEST_CODEGEN):
-            if self.success(KEY_TEST_CODEGEN):
-                codegen = MSG_SUCCESS
-            else:
-                codegen = MSG_ERROR
-
-        if self.contains(KEY_TEST_IDEMPOTENCY):
-            if self.success(KEY_TEST_IDEMPOTENCY):
-                idempotency = MSG_SUCCESS
-            else:
-                idempotency = MSG_ERROR
-
-        if self.contains(KEY_TEST_CORRECTNESS):
-            if self.success(KEY_TEST_CORRECTNESS):
-                correctness = MSG_SUCCESS
-            else:
-                correctness = MSG_ERROR
-
-        return f"- PARSING: {parsing}\n- CODE GENERATION: {codegen}\n- IDEMPOTENCY: {idempotency}\n- CORRECTNESS: {correctness}\n"
+        handler.run()
 
     def execute(self) -> None:
         # test the parsing and code generation
-        _, out, err = self.cmd.run()
+        args = transpiler_cmd('clava', self.params)
+
+        cmd = Command(args)
+
+        _, out, err = cmd.run()
 
         self.process(out, err)
 
@@ -141,7 +121,7 @@ class Test:
 
     def success(self, test_kind: str) -> bool:
         return self.results[test_kind][KEY_SUCCESS]
-    
+
     def idempotency(self) -> None:
         handler = IdempotencyHandler(self.output_path, self.params)
 
@@ -149,7 +129,7 @@ class Test:
 
         self.results[KEY_TEST_IDEMPOTENCY][KEY_RESULTS] = subtests
         self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
-    
+
     def correctness(self) -> None:
         handler = CorrectnessHandler(self.source_path, self.output_path)
 

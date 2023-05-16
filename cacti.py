@@ -1,4 +1,5 @@
 import os
+import argparse
 
 from modules.test import *
 from modules.command import *
@@ -22,11 +23,29 @@ if __name__ == '__main__':
         print("Usage:\n$ python3 cacti.py <test_folder> <transpiler>")
         exit(1)
 
+    parser = argparse.ArgumentParser(description='Script to run CACTI')
 
-    WORKING_DIR = str(os.getcwd()) + '/'
-    INPUT_FOLDER = WORKING_DIR + str(os.sys.argv[1]).lower()
+    # add arguments
+    parser.add_argument('-S', dest='path',       required=True, help='path to cacti_tests')
+    parser.add_argument('-T', dest='transpiler', required=True, help='name of the transpiler')
+
+    # add flags
+    parser.add_argument('-vi', action='store_true', help='enable verbose idempotency output')
+    parser.add_argument('-vc', action='store_true', help='enable verbose correctness output')
+
+    # parse the arguments
+    args = parser.parse_args()
     
-    TRANSPILER = str(os.sys.argv[2]).lower()
+    WORKING_DIR = str(os.getcwd()) + '/'
+    INPUT_FOLDER = WORKING_DIR + args.path
+    
+    path = args.path
+    trsp = args.transpiler
+
+    print(path)
+    print(trsp)
+
+    TRANSPILER = str(trsp).lower()
 
     paths_c98 = find_source_files(os.path.join(INPUT_FOLDER, 'C++98'))
     paths_c11 = find_source_files(os.path.join(INPUT_FOLDER, 'C++11'))
@@ -42,18 +61,16 @@ if __name__ == '__main__':
         
         aux_path = 'output' + rel_path[0:len(rel_path) - 7]
         
-        print(f"Running {rel_path}...")
-
         output_path = os.path.join(INPUT_FOLDER, aux_path)
         
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         
-        test = Test(source_path, output_path, 0)
+        test = Test(source_path, output_path, TRANSPILER, 0)
 
         test.execute()
 
-        print(test)
+        test.print()
 
         test.save()
     

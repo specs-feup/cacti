@@ -1,7 +1,7 @@
 import os
 import time
 
-from exception import I
+from modules.exception import CorrectnessException
 from modules.command import *
 
 
@@ -50,8 +50,11 @@ class CorrectnessHandler:
         ir_from_src = os.path.join(self.output_path, 'src.ll')
         ir_from_gen = os.path.join(self.output_path, 'gen.ll')
 
-        src_proc_code, _, _ = Command(emit_llvm(self.source_path, self.output_path, LLVM_O0)).run()
-        gen_proc_code, _, _ = Command(emit_llvm(gen_path, self.output_path, LLVM_O0)).run()
+        src_ir_cmd = Command(emit_llvm(self.source_path, self.output_path, LLVM_O0))
+        gen_ir_cmd = Command(emit_llvm(gen_path, self.output_path, LLVM_O0))
+
+        src_proc_code, _, _ = src_ir_cmd.run()
+        gen_proc_code, _, _ = gen_ir_cmd.run()
 
         end = time.time()
 

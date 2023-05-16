@@ -3,7 +3,7 @@ import json
 import time
 import filecmp
 
-from exception import IdempotencyException
+from modules.exception import IdempotencyException
 from modules.command import *
 
 
@@ -34,7 +34,7 @@ class IdempotencyHandler:
     def __init__(self, output_path: str, params: dict) -> None:
         self.params = params
         self.output_path = output_path
-        self.transpiler = str(os.sys.argv[2]).lower()
+        self.transpiler = params["transpiler"]
         self.curr_try = 0
 
     def get_filename(self) -> str:
