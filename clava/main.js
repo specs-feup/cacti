@@ -83,7 +83,6 @@ catch (error) {
     success: false,
     log: "An error occurred while trying to parse the source file."
   }
-  console.log('ERROR: I could not parse the source file');
   console.log(CACTI_DELIMITER_BEGIN + JSON.stringify(output) + CACTI_DELIMITER_END);
 
   throw error;

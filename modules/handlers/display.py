@@ -20,10 +20,10 @@ class DisplayHandler:
         self.test = test
 
     def test_passed(self, test: str, time: float) -> str:
-        return Style.DIM + Fore.WHITE + test + f" passed successfully ({str(time)}ms)" + Style.RESET_ALL
+        return f"{2*INDENT}{CHECKMARK} " + Style.DIM + Fore.WHITE + test + f" passed successfully ({str(time)}ms)" + Style.RESET_ALL
 
-    def test_failed(self, test: str, time: float) -> str:
-        return Style.DIM + Fore.WHITE + test + f" failed ({str(time)}ms)" + Style.RESET_ALL
+    def test_failed(self, test: str) -> str:
+        return f"{2*INDENT}{ERROR} " + Style.DIM + Fore.WHITE + test + f" failed" + Style.RESET_ALL
 
     def test_unknown(self, test: str) -> str:
         return f"{2*INDENT}{SQUARE} {test} was not run"
@@ -33,9 +33,9 @@ class DisplayHandler:
 
     def test_results(self, passed: int, failed: int) -> tuple:
         passed_str = CHECKMARK + " " + Style.BRIGHT + \
-            Fore.GREEN + str(passed) + " tests passed"
+            Fore.GREEN + str(passed) + " tests passed" + Style.RESET_ALL
         failed_str = ERROR + " " + Style.BRIGHT + \
-            Fore.RED + str(failed) + " tests failed"
+            Fore.RED + str(failed) + " tests failed" + Style.RESET_ALL
 
         return passed_str, failed_str
     
@@ -61,7 +61,7 @@ class DisplayHandler:
                 parsing = self.test_passed('parsing', self.test[KEY_TEST_PARSING][KEY_TIME])
                 passed += 1
             else:
-                parsing = self.test_failed('parsing', self.test[KEY_TEST_PARSING][KEY_TIME])
+                parsing = self.test_failed('parsing')
                 failed += 1
 
         if self.contains(KEY_TEST_CODEGEN):
@@ -69,15 +69,15 @@ class DisplayHandler:
                 codegen = self.test_passed('codegen', self.test[KEY_TEST_CODEGEN][KEY_TIME])
                 passed += 1
             else:
-                codegen = self.test_failed('codegen', self.test[KEY_TEST_CODEGEN][KEY_TIME])
+                codegen = self.test_failed('codegen')
                 failed += 1
 
         if self.contains(KEY_TEST_IDEMPOTENCY):
             if self.success(KEY_TEST_IDEMPOTENCY):
-                idempotency = self.test_passed('idempotency', self.test[KEY_TEST_IDEMPOTENCY][KEY_TIME])
+                idempotency = self.test_passed('idempotency', 0.0)
                 passed += 1
             else:
-                idempotency = self.test_failed('idempotency', self.test[KEY_TEST_IDEMPOTENCY][KEY_TIME])
+                idempotency = self.test_failed('idempotency')
                 failed += 1
 
         if self.contains(KEY_TEST_CORRECTNESS):
@@ -85,7 +85,7 @@ class DisplayHandler:
                 correctness = self.test_passed('correctness', self.test[KEY_TEST_CORRECTNESS][KEY_TIME])
                 passed += 1
             else:
-                correctness = self.test_failed('correctness', self.test[KEY_TEST_CORRECTNESS][KEY_TIME])
+                correctness = self.test_failed('correctness')
                 failed += 1
 
         num_passed, num_failed = self.test_results(passed, failed)

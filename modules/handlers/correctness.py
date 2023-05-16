@@ -46,7 +46,8 @@ class CorrectnessHandler:
         start = time.time()
 
         gen_path = os.path.join(self.output_path, 'src.cpp')
-
+        
+        print("before")
         ir_from_src = os.path.join(self.output_path, 'src.ll')
         ir_from_gen = os.path.join(self.output_path, 'gen.ll')
 
@@ -60,9 +61,13 @@ class CorrectnessHandler:
 
         elapsed = round(start - end, 3)
 
+        # emit_llvm failed to execute
+        if (src_proc_code == 1) or (gen_proc_code == 1):
+            return False, elapsed
+        
         stripped_src_ir = self.strip_ir(ir_from_src)
         stripped_gen_ir = self.strip_ir(ir_from_gen)
 
-        success = (src_proc_code != 1) and (gen_proc_code != 1) and (stripped_src_ir == stripped_gen_ir)
+        success = stripped_src_ir == stripped_gen_ir
 
         return success, elapsed
