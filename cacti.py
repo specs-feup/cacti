@@ -4,6 +4,15 @@ import argparse
 from modules.test import *
 from modules.command import *
 
+KEY_ARG_SOURCE_PATH = 'source_path'
+KEY_ARG_OUTPUT_PATH = 'output_path'
+KEY_ARG_TRANSPILER  = 'transpiler'
+KEY_ARG_STD = 'std'
+KEY_ARG_IT  = 'it'
+KEY_ARG_OPT = 'opt'
+KEY_FLAG_VI = 'vi'
+KEY_FLAG_VC = 'vc'
+
 def find_source_files(root: str):
     return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith('.cpp')]
     """Fetches all the C++ source files to be tested by CACTI.
@@ -52,17 +61,17 @@ if __name__ == '__main__':
     vc = args.vc
 
     test_params = {
-        'source_path' : None,
-        'output_path' : None,
+        KEY_ARG_SOURCE_PATH : None,
+        KEY_ARG_OUTPUT_PATH : None,
         
-        'transpiler'  : trsp,
+        KEY_ARG_TRANSPILER  : trsp,
         
-        'std'         : std,
-        'it'          : it,
-        'opt'         : opt,
+        KEY_ARG_TRANSPILER  : std,
+        KEY_ARG_IT          : it,
+        KEY_ARG_OPT         : opt,
         
-        'vi'          : vi,
-        'vc'          : vc
+        KEY_FLAG_VI         : vi,
+        KEY_FLAG_VC         : vc
     }
 
     WORKING_DIR = str(os.getcwd()) + '/'
@@ -86,10 +95,12 @@ if __name__ == '__main__':
         
         output_path = os.path.join(INPUT_FOLDER, aux_path)
         
-        
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         
+        test_params[KEY_ARG_SOURCE_PATH] = source_path
+        test_params[KEY_ARG_OUTPUT_PATH] = output_path
+
         test = Test(source_path, output_path, TRANSPILER, 0)
 
         test.execute()
