@@ -25,9 +25,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Script to run CACTI')
 
-    # add arguments
+    # add mandatory arguments
     parser.add_argument('-S', dest='path',       required=True, help='path to cacti_tests')
     parser.add_argument('-T', dest='transpiler', required=True, help='name of the transpiler')
+    
+    # add optional arguments
+    parser.add_argument('-std', nargs='?', const='default_std', help='C standard')
+    parser.add_argument('-it',  nargs='?', const='id_tries',    help='number of idempotency tries')
+    parser.add_argument('opt',  choices=['-O0', '-O2', '-O3'],  default='-O0', help='optimization flag for emit_llvm')
 
     # add flags
     parser.add_argument('-vi', action='store_true', help='enable verbose idempotency output')
@@ -36,12 +41,33 @@ if __name__ == '__main__':
     # parse the arguments
     args = parser.parse_args()
     
+    path = args.path
+    trsp = args.transpiler
+    
+    std = args.std
+    it  = args.it
+    opt = args.opt
+
+    vi = args.vi
+    vc = args.vc
+
+    test_params = {
+        'source_path' : None,
+        'output_path' : None,
+        
+        'transpiler'  : trsp,
+        
+        'std'         : std,
+        'it'          : it,
+        'opt'         : opt,
+        
+        'vi'          : vi,
+        'vc'          : vc
+    }
+
     WORKING_DIR = str(os.getcwd()) + '/'
     INPUT_FOLDER = WORKING_DIR + args.path
     
-    path = args.path
-    trsp = args.transpiler
-
     TRANSPILER = str(trsp).lower()
 
     paths_c98 = find_source_files(os.path.join(INPUT_FOLDER, 'C++98'))
@@ -59,6 +85,7 @@ if __name__ == '__main__':
         aux_path = 'output' + rel_path[0:len(rel_path) - 7]
         
         output_path = os.path.join(INPUT_FOLDER, aux_path)
+        
         
         if not os.path.exists(output_path):
             os.makedirs(output_path)
