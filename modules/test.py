@@ -33,7 +33,7 @@ PARAMS_FILE = str("file")
 PARAMS_OUTPUT_FOLDER = str("output_folder")
 PARAMS_TRANSPILER = str("transpiler")
 PARAMS_CURR_TRY = str("curr_try")
-PARAMS_DEBUG = str("debug_mode")
+PARAMS_DEBUG = 'debug_mode'
 
 
 # Success and Error messages
@@ -60,19 +60,44 @@ LLVM_O3 = str('-O3')
 
 PREFIX_IR_METADATA = '!'
 
+KEY_ARG_SOURCE_PATH = 'source_path'
+KEY_ARG_OUTPUT_PATH = 'output_path'
+KEY_ARG_TRANSPILER  = 'transpiler'
+KEY_ARG_OUTPUT_FILENAME = 'output_filename'
+KEY_ARG_STD = 'std'
+KEY_ARG_IT  = 'it'
+KEY_ARG_OPT = 'opt'
+KEY_FLAG_VI = 'vi'
+KEY_FLAG_VC = 'vc'
+
 
 class Test:
-    def __init__(self, source_path: str, output_path: str, transpiler: str, curr_try: int) -> None:
-        self.source_path = source_path
-        self.output_path = output_path
-        self.curr_try = curr_try
+    def __init__(self, test_params: dict) -> None:
+        self.source_path = test_params[KEY_ARG_SOURCE_PATH]
+        self.output_path = test_params[KEY_ARG_OUTPUT_PATH]
+        
+        self.transpiler = test_params[KEY_ARG_TRANSPILER]
 
-        self.params = {
-            PARAMS_FILE: self.source_path,
-            PARAMS_OUTPUT_FOLDER: self.output_path,
-            PARAMS_TRANSPILER: transpiler,
-            PARAMS_CURR_TRY: str(self.curr_try),
-            PARAMS_DEBUG: DEBUG_OFF
+        self.std = test_params[KEY_ARG_STD]
+        self.it  = test_params[KEY_ARG_IT]
+        self.opt = test_params[KEY_ARG_OPT]
+
+        self.vi = test_params[KEY_FLAG_VI]
+        self.vc = test_params[KEY_FLAG_VC]
+
+        self.debug = DEBUG_OFF
+
+        self.trsp_params = {
+            KEY_ARG_SOURCE_PATH     : test_params[KEY_ARG_SOURCE_PATH],
+            KEY_ARG_OUTPUT_PATH     : test_params[KEY_ARG_OUTPUT_PATH],
+            KEY_ARG_OUTPUT_FILENAME : 'src.cpp',
+            PARAMS_DEBUG            : DEBUG_OFF
+        }
+
+        self.corr_params = {
+            KEY_ARG_SOURCE_PATH : test_params[KEY_ARG_SOURCE_PATH],
+            KEY_ARG_SOURCE_PATH : test_params[KEY_ARG_OUTPUT_PATH],
+            KEY_ARG_OPT         : test_params[KEY_ARG_OPT]
         }
 
         self.results = dict()
@@ -84,7 +109,7 @@ class Test:
 
     def execute(self) -> None:
         # test the parsing and code generation
-        args = transpiler_cmd('clava', self.params)
+        args = transpiler_cmd(self.transpiler, self.trsp_params)
 
         cmd = Command(args)
 
@@ -123,7 +148,7 @@ class Test:
         return self.results[test_kind][KEY_SUCCESS]
 
     def idempotency(self) -> None:
-        handler = IdempotencyHandler(self.output_path, self.params)
+        handler = IdempotencyHandler(self.output_path, self.transpiler)
 
         subtests, success = handler.run()
 
@@ -131,7 +156,7 @@ class Test:
         self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
 
     def correctness(self) -> None:
-        handler = CorrectnessHandler(self.source_path, self.output_path)
+        handler = CorrectnessHandler(self.source_path, self.output_path, self.opt)
 
         success, elapsed = handler.run()
 

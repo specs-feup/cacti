@@ -101,11 +101,14 @@ if __name__ == '__main__':
         test_params[KEY_ARG_SOURCE_PATH] = source_path
         test_params[KEY_ARG_OUTPUT_PATH] = output_path
 
-        test = Test(source_path, output_path, TRANSPILER, 0)
-
+        test = Test(test_params)
+        
+        # execute test
         test.execute()
 
+        # display results
         test.print()
 
+        # save results
         test.save()
     
