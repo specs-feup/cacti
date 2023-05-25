@@ -84,7 +84,10 @@ if __name__ == '__main__':
     paths_c17 = find_source_files(os.path.join(INPUT_FOLDER, 'C++17'))
     paths_c20 = find_source_files(os.path.join(INPUT_FOLDER, 'C++20'))
 
-    paths = paths_c98 + paths_c11 + paths_c17 + paths_c20
+    if std:
+        paths = find_source_files(os.path.join(INPUT_FOLDER, std))
+    else:
+        paths = paths_c98 + paths_c11 + paths_c17 + paths_c20
 
     paths.sort()
 
