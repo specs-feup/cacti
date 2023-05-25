@@ -101,6 +101,8 @@ class Test:
             KEY_ARG_SOURCE_PATH     : test_params[KEY_ARG_SOURCE_PATH],
             KEY_ARG_OUTPUT_PATH     : test_params[KEY_ARG_OUTPUT_PATH],
             KEY_ARG_OUTPUT_FILENAME : 'src.cpp',
+            KEY_FLAG_VI             : self.vi,
+            KEY_ARG_IT              : self.it,
             PARAMS_DEBUG            : DEBUG_ON
         }
 

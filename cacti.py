@@ -108,6 +108,7 @@ if __name__ == '__main__':
 
         # display results
         test.print()
+        print('\n')
 
         # save results
         test.save()

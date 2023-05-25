@@ -40,6 +40,8 @@ class IdempotencyHandler:
         self.output_filename = params["output_filename"]
 
         self.debug_mode = params["debug_mode"]
+        self.vi = params["vi"]
+        self.it = params["it"]
 
         self.trsp_params = {
             "source_path": self.source_path,
@@ -83,7 +85,6 @@ class IdempotencyHandler:
         gen = os.path.join(self.output_path, gen_filename)
 
         if not os.path.isfile(gen):
-            print("not a file error!")
             raise OSError(f"Error: the file {gen} could not be found!")
 
         end = time.time()
@@ -97,8 +98,10 @@ class IdempotencyHandler:
 
         self.trsp_params["debug_mode"] = str(True)
 
+        depth = int(self.it) if self.it else IDEMPOTENCY_DEPTH
+
         while True:
-            if self.curr_try > IDEMPOTENCY_DEPTH:
+            if self.curr_try > depth:
                 success = False
                 break
 
@@ -118,7 +121,16 @@ class IdempotencyHandler:
             elif not temp_test[KEY_TEST_CODEGEN][KEY_SUCCESS]:
                 temp_test[KEY_TEST_CODEGEN][KEY_LOG] = err
 
-            equals = filecmp.cmp(src, gen)
+            if self.vi:
+                args = diff(src, gen)
+                
+                diff_cmd = Command(args)
+
+                _, stdout, _ = diff_cmd.run()
+
+                equals = stdout
+            else:
+                equals = filecmp.cmp(src, gen)
 
             temp_test[KEY_SRC] = src
             temp_test[KEY_GEN] = gen
@@ -127,8 +139,7 @@ class IdempotencyHandler:
 
             subtests.append(temp_test)
 
-            print(f"temp_test: {temp_test}")
-            if equals:
+            if equals or len(equals.strip()) == 0:
                 success = True
                 break
 
