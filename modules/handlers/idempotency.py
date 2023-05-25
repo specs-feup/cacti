@@ -31,10 +31,23 @@ KEY_RESULTS = str('results')
 
 
 class IdempotencyHandler:
-    def __init__(self, output_path: str, params: dict) -> None:
-        self.params = params
-        self.output_path = output_path
+    def __init__(self, params: dict) -> None:
         self.transpiler = params["transpiler"]
+
+        self.source_path = params["source_path"]
+        self.output_path = params["output_path"]
+
+        self.output_filename = params["output_filename"]
+
+        self.debug_mode = params["debug_mode"]
+
+        self.trsp_params = {
+            "source_path": self.source_path,
+            "output_path": self.output_path,
+            "output_filename": self.output_filename,
+            "debug_mode": self.debug_mode
+        }
+
         self.curr_try = 0
 
     def get_filename(self) -> str:
@@ -52,21 +65,25 @@ class IdempotencyHandler:
     def iteration(self) -> tuple:
         start = time.time()
 
-        src = os.path.join(self.output_path, self.get_filename())
+        src_filename = self.get_filename()
         
         self.curr_try += 1
 
-        self.params[PARAMS_CURR_TRY] = str(self.curr_try)
+        gen_filename = self.get_filename()
 
-        args = transpiler_cmd(self.transpiler, self.params)
+        src = os.path.join(self.output_path, src_filename)
+
+        self.trsp_params["output_filename"] = gen_filename
+
+        args = transpiler_cmd(self.transpiler, self.trsp_params)
 
         cmd = Command(args)
-
         _, stdout, stderr = cmd.run()
 
-        gen = os.path.join(self.output_path, self.get_filename())
+        gen = os.path.join(self.output_path, gen_filename)
 
         if not os.path.isfile(gen):
+            print("not a file error!")
             raise OSError(f"Error: the file {gen} could not be found!")
 
         end = time.time()
@@ -78,7 +95,7 @@ class IdempotencyHandler:
 
         success = True
 
-        self.params[PARAMS_DEBUG] = DEBUG_ON
+        self.trsp_params["debug_mode"] = str(True)
 
         while True:
             if self.curr_try > IDEMPOTENCY_DEPTH:
@@ -92,7 +109,7 @@ class IdempotencyHandler:
                 break
 
             temp_test = json.loads(self.parse_output(out))
-            
+
             temp_test.pop(KEY_TEST_IDEMPOTENCY)
             temp_test.pop(KEY_TEST_CORRECTNESS)
 
@@ -110,10 +127,11 @@ class IdempotencyHandler:
 
             subtests.append(temp_test)
 
+            print(f"temp_test: {temp_test}")
             if equals:
                 success = True
                 break
 
-        self.params[PARAMS_DEBUG] = DEBUG_OFF
+        self.trsp_params["debug_mode"] = str(False)
 
         return subtests, success

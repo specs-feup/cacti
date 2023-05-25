@@ -7,8 +7,8 @@ const CACTI_DELIMITER_BEGIN = 'CACTI_OUTPUT_BEGIN';
 const CACTI_DELIMITER_END   = 'CACTI_OUTPUT_END';
 
 /* lara arguments */
-const file = laraArgs.file;
-const outputFolder = laraArgs.output_folder;
+const file = laraArgs.source_path;
+const outputFolder = laraArgs.output_path;
 const outputFilename = laraArgs.output_filename;
 const debugMode = laraArgs.debug_mode;
 
@@ -83,6 +83,8 @@ try {
 
   output.test_code_generation = {
     success: true,
+    output_filename: outputFilename,
+    output_folder: outputFolder,
     log: "The generation of the source code was completed succesfully.",
     time: time
   };
@@ -90,6 +92,8 @@ try {
 catch (error) {
   output.test_code_generation = {
     success: false,
+    output_filename: outputFilename,
+    output_folder: outputFolder,
     log: "An error occurred while trying to generate source code from the input file."
   };
 

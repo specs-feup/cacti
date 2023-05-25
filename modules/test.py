@@ -87,6 +87,7 @@ class Test:
 
         self.debug = DEBUG_OFF
 
+        # params to call the transpiler process
         self.trsp_params = {
             KEY_ARG_SOURCE_PATH     : test_params[KEY_ARG_SOURCE_PATH],
             KEY_ARG_OUTPUT_PATH     : test_params[KEY_ARG_OUTPUT_PATH],
@@ -94,9 +95,19 @@ class Test:
             PARAMS_DEBUG            : DEBUG_OFF
         }
 
+        # params to run idempotency 
+        self.idem_params = {
+            PARAMS_TRANSPILER       : self.transpiler,
+            KEY_ARG_SOURCE_PATH     : test_params[KEY_ARG_SOURCE_PATH],
+            KEY_ARG_OUTPUT_PATH     : test_params[KEY_ARG_OUTPUT_PATH],
+            KEY_ARG_OUTPUT_FILENAME : 'src.cpp',
+            PARAMS_DEBUG            : DEBUG_ON
+        }
+
+        # params to run correctness
         self.corr_params = {
             KEY_ARG_SOURCE_PATH : test_params[KEY_ARG_SOURCE_PATH],
-            KEY_ARG_SOURCE_PATH : test_params[KEY_ARG_OUTPUT_PATH],
+            KEY_ARG_OUTPUT_PATH : test_params[KEY_ARG_OUTPUT_PATH],
             KEY_ARG_OPT         : test_params[KEY_ARG_OPT]
         }
 
@@ -120,7 +131,7 @@ class Test:
         # if both succeeded, test idempotency and correctness
         if self.contains(KEY_TEST_CODEGEN) and self.success(KEY_TEST_CODEGEN):
             self.idempotency()
-            self.correctness()
+            # self.correctness()
 
     def parse_output(self, output: str) -> str:
         _, _, after = output.partition('CACTI_OUTPUT_BEGIN')
@@ -132,7 +143,7 @@ class Test:
         json_data = self.parse_output(out)
 
         self.results = json.loads(json_data)
-
+            
         # if the parsing failed, modify the json object to contain information about the error
         if not self.results[KEY_TEST_PARSING][KEY_SUCCESS]:
             self.results[KEY_TEST_PARSING][KEY_LOG] = err
@@ -148,7 +159,7 @@ class Test:
         return self.results[test_kind][KEY_SUCCESS]
 
     def idempotency(self) -> None:
-        handler = IdempotencyHandler(self.output_path, self.transpiler)
+        handler = IdempotencyHandler(self.idem_params)
 
         subtests, success = handler.run()
 
@@ -156,7 +167,7 @@ class Test:
         self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
 
     def correctness(self) -> None:
-        handler = CorrectnessHandler(self.source_path, self.output_path, self.opt)
+        handler = CorrectnessHandler(self.corr_params)
 
         success, elapsed = handler.run()
 

@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # add optional arguments
     parser.add_argument('-std', nargs='?', const='default_std', help='C standard')
     parser.add_argument('-it',  nargs='?', const='id_tries',    help='number of idempotency tries')
-    parser.add_argument('opt',  choices=['-O0', '-O2', '-O3'],  default='-O0', help='optimization flag for emit_llvm')
+    parser.add_argument('opt',  nargs='?', choices=['O0', 'O2', 'O3'],  default='O0', help='optimization flag for emit_llvm')
 
     # add flags
     parser.add_argument('-vi', action='store_true', help='enable verbose idempotency output')
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     
     std = args.std
     it  = args.it
-    opt = args.opt
+    opt = args.opt if args.opt else 'O0'
 
     vi = args.vi
     vc = args.vc
@@ -66,12 +66,12 @@ if __name__ == '__main__':
         
         KEY_ARG_TRANSPILER  : trsp,
         
-        KEY_ARG_TRANSPILER  : std,
-        KEY_ARG_IT          : it,
-        KEY_ARG_OPT         : opt,
+        KEY_ARG_STD : std,
+        KEY_ARG_IT  : it,
+        KEY_ARG_OPT : opt,
         
-        KEY_FLAG_VI         : vi,
-        KEY_FLAG_VC         : vc
+        KEY_FLAG_VI : vi,
+        KEY_FLAG_VC : vc
     }
 
     WORKING_DIR = str(os.getcwd()) + '/'
