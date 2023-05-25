@@ -1,5 +1,6 @@
 import os
 import time
+import difflib
 
 from modules.exception import CorrectnessException
 from modules.command import *
@@ -11,9 +12,11 @@ LLVM_O3 = str('-O3')
 
 
 class CorrectnessHandler:
-    def __init__(self, source_path: str, output_path: str) -> None:
-        self.source_path = source_path
-        self.output_path = output_path
+    def __init__(self, params: dict) -> None:
+        self.source_path = params["source_path"]
+        self.output_path = params["output_path"]
+        self.opt = params["opt"]
+        self.vc = params["vc"]
 
     def strip_ir(self, ir: str) -> str:
         ir_file = open(ir, 'r')
@@ -50,8 +53,8 @@ class CorrectnessHandler:
         ir_from_src = os.path.join(self.output_path, 'src.ll')
         ir_from_gen = os.path.join(self.output_path, 'gen.ll')
 
-        src_ir_cmd = Command(emit_llvm(self.source_path, ir_from_src, LLVM_O0))
-        gen_ir_cmd = Command(emit_llvm(gen_path, ir_from_gen, LLVM_O0))
+        src_ir_cmd = Command(emit_llvm(self.source_path, ir_from_src, '-' + self.opt))
+        gen_ir_cmd = Command(emit_llvm(gen_path, ir_from_gen, '-' + self.opt))
 
         src_proc_code, _, _ = src_ir_cmd.run()
         gen_proc_code, _, _ = gen_ir_cmd.run()
@@ -62,13 +65,11 @@ class CorrectnessHandler:
 
         # emit_llvm failed to execute
         if (src_proc_code != 0) or (gen_proc_code != 0):
+            print("emit_llvm failed to execute")
             return False, elapsed
         
         stripped_src_ir = self.strip_ir(ir_from_src)
         stripped_gen_ir = self.strip_ir(ir_from_gen)
-
-        print(f"stripped_src_ir: {stripped_src_ir}")
-        print(f"stripped_gen_ir: {stripped_gen_ir}")
 
         success = stripped_src_ir == stripped_gen_ir
 

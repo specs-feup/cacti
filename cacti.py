@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # add optional arguments
     parser.add_argument('-std', nargs='?', const='default_std', help='C standard')
     parser.add_argument('-it',  nargs='?', const='id_tries',    help='number of idempotency tries')
-    parser.add_argument('opt',  nargs='?', choices=['O0', 'O2', 'O3'],  default='O0', help='optimization flag for emit_llvm')
+    parser.add_argument('-opt',  nargs='?', choices=['O0', 'O2', 'O3'],  default='O0', help='optimization flag for emit_llvm')
 
     # add flags
     parser.add_argument('-vi', action='store_true', help='enable verbose idempotency output')

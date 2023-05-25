@@ -110,7 +110,8 @@ class Test:
         self.corr_params = {
             KEY_ARG_SOURCE_PATH : test_params[KEY_ARG_SOURCE_PATH],
             KEY_ARG_OUTPUT_PATH : test_params[KEY_ARG_OUTPUT_PATH],
-            KEY_ARG_OPT         : test_params[KEY_ARG_OPT]
+            KEY_ARG_OPT         : test_params[KEY_ARG_OPT],
+            KEY_FLAG_VC         : test_params[KEY_FLAG_VC]
         }
 
         self.results = dict()
@@ -133,7 +134,7 @@ class Test:
         # if both succeeded, test idempotency and correctness
         if self.contains(KEY_TEST_CODEGEN) and self.success(KEY_TEST_CODEGEN):
             self.idempotency()
-            # self.correctness()
+            self.correctness()
 
     def parse_output(self, output: str) -> str:
         _, _, after = output.partition('CACTI_OUTPUT_BEGIN')
