@@ -62,24 +62,38 @@ PREFIX_IR_METADATA = '!'
 
 KEY_ARG_SOURCE_PATH = 'source_path'
 KEY_ARG_OUTPUT_PATH = 'output_path'
-KEY_ARG_TRANSPILER  = 'transpiler'
+KEY_ARG_TRANSPILER = 'transpiler'
 KEY_ARG_OUTPUT_FILENAME = 'output_filename'
 KEY_ARG_STD = 'std'
-KEY_ARG_IT  = 'it'
+KEY_ARG_IT = 'it'
 KEY_ARG_OPT = 'opt'
 KEY_FLAG_VI = 'vi'
 KEY_FLAG_VC = 'vc'
 
 
 class Test:
+    """Module responsible for the execution of tests.
+
+    This module is responsible for performing all four transpilation tasks on a single source file. It tests
+    the parsing and code generation (transpiler specific operations), as well as idempotency and correctness.
+
+    Attributes:
+        test_params (dict): Parameters to be used throughout the test.
+    """
+
     def __init__(self, test_params: dict) -> None:
+        """Initialize the Test instance.
+
+        Args:
+            test_params (dict): The value for test_params.
+        """
         self.source_path = test_params[KEY_ARG_SOURCE_PATH]
         self.output_path = test_params[KEY_ARG_OUTPUT_PATH]
-        
+
         self.transpiler = test_params[KEY_ARG_TRANSPILER]
 
         self.std = test_params[KEY_ARG_STD]
-        self.it  = test_params[KEY_ARG_IT]
+        self.it = test_params[KEY_ARG_IT]
         self.opt = test_params[KEY_ARG_OPT]
 
         self.vi = test_params[KEY_FLAG_VI]
@@ -89,39 +103,48 @@ class Test:
 
         # params to call the transpiler process
         self.trsp_params = {
-            KEY_ARG_SOURCE_PATH     : test_params[KEY_ARG_SOURCE_PATH],
-            KEY_ARG_OUTPUT_PATH     : test_params[KEY_ARG_OUTPUT_PATH],
-            KEY_ARG_OUTPUT_FILENAME : 'src.cpp',
-            PARAMS_DEBUG            : DEBUG_OFF
+            KEY_ARG_SOURCE_PATH: test_params[KEY_ARG_SOURCE_PATH],
+            KEY_ARG_OUTPUT_PATH: test_params[KEY_ARG_OUTPUT_PATH],
+            KEY_ARG_OUTPUT_FILENAME: 'src.cpp',
+            PARAMS_DEBUG: DEBUG_OFF
         }
 
-        # params to run idempotency 
+        # params to run idempotency
         self.idem_params = {
-            PARAMS_TRANSPILER       : self.transpiler,
-            KEY_ARG_SOURCE_PATH     : test_params[KEY_ARG_SOURCE_PATH],
-            KEY_ARG_OUTPUT_PATH     : test_params[KEY_ARG_OUTPUT_PATH],
-            KEY_ARG_OUTPUT_FILENAME : 'src.cpp',
-            KEY_FLAG_VI             : self.vi,
-            KEY_ARG_IT              : self.it,
-            PARAMS_DEBUG            : DEBUG_ON
+            PARAMS_TRANSPILER: self.transpiler,
+            KEY_ARG_SOURCE_PATH: test_params[KEY_ARG_SOURCE_PATH],
+            KEY_ARG_OUTPUT_PATH: test_params[KEY_ARG_OUTPUT_PATH],
+            KEY_ARG_OUTPUT_FILENAME: 'src.cpp',
+            KEY_FLAG_VI: self.vi,
+            KEY_ARG_IT: self.it,
+            PARAMS_DEBUG: DEBUG_ON
         }
 
         # params to run correctness
         self.corr_params = {
-            KEY_ARG_SOURCE_PATH : test_params[KEY_ARG_SOURCE_PATH],
-            KEY_ARG_OUTPUT_PATH : test_params[KEY_ARG_OUTPUT_PATH],
-            KEY_ARG_OPT         : test_params[KEY_ARG_OPT],
-            KEY_FLAG_VC         : test_params[KEY_FLAG_VC]
+            KEY_ARG_SOURCE_PATH: test_params[KEY_ARG_SOURCE_PATH],
+            KEY_ARG_OUTPUT_PATH: test_params[KEY_ARG_OUTPUT_PATH],
+            KEY_ARG_OPT: test_params[KEY_ARG_OPT],
+            KEY_FLAG_VC: test_params[KEY_FLAG_VC]
         }
 
         self.results = dict()
 
     def print(self) -> None:
+        """Display the results of the test.
+
+        Display the results of the test by calling the handler responsible to do so.
+        """
         handler = DisplayHandler(self.source_path, self.results)
 
         handler.run()
 
     def execute(self) -> None:
+        """Execute the test.
+
+        Compute the command which launches the transpiler process and execute it. If the parsing and code generation
+        tasks pass, proceed to test the idempotency and correctness.
+        """
         # test the parsing and code generation
         args = transpiler_cmd(self.transpiler, self.trsp_params)
 
@@ -137,16 +160,36 @@ class Test:
             self.correctness()
 
     def parse_output(self, output: str) -> str:
+        """Parse the output of the transpiler process.
+
+        The transpiler writes a JSON object to STDOUT, containing the results of the transpiler specific tasks:
+        parsing and code generation. This object is placed in between two delimiters, which are used in this function to
+        properly parse the output.
+
+        Args:
+            output (str): The output to parse.
+
+        Returns:
+            str: The parsed JSON object.
+        """
         _, _, after = output.partition('CACTI_OUTPUT_BEGIN')
         json_data, _, after = after.partition('CACTI_OUTPUT_END')
 
         return json_data
 
     def process(self, out: str, err: str) -> None:
+        """Process the output JSON.
+
+        Processes the output JSON, so that it can be interpreted as a Python dictionary in future computations.
+        
+        Args:
+            out (str): The output JSON.
+            err (str): Error messages written by the transpiler to STDERR, which are to be included in the final result JSON.
+        """
         json_data = self.parse_output(out)
 
         self.results = json.loads(json_data)
-            
+
         # if the parsing failed, modify the json object to contain information about the error
         if not self.results[KEY_TEST_PARSING][KEY_SUCCESS]:
             self.results[KEY_TEST_PARSING][KEY_LOG] = err
@@ -156,12 +199,30 @@ class Test:
             self.results[KEY_TEST_CODEGEN][KEY_LOG] = err
 
     def contains(self, test_kind: str) -> bool:
+        """Check if the result JSON contains a specific transpilation task.
+
+        Args:
+            test_kind (str): The transpilation task.
+        
+        Returns:
+            bool: True if the result contains the transpilation task as a key, False otherwise.
+        """
         return test_kind in self.results.keys()
 
     def success(self, test_kind: str) -> bool:
+        """Check if a given transpilation task was successful, and is written as so in the result JSON.
+
+        Args:
+            test_kind (str): The transpilation task.
+        
+        Returns:
+            bool: True if the task was successful, False otherwise.
+        """
         return self.results[test_kind][KEY_SUCCESS]
 
     def idempotency(self) -> None:
+        """Test for idempotency by calling the appropriate handler.
+        """
         handler = IdempotencyHandler(self.idem_params)
 
         subtests, success = handler.run()
@@ -170,6 +231,8 @@ class Test:
         self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
 
     def correctness(self) -> None:
+        """Test for correctness by calling the appropriate handler.
+        """
         handler = CorrectnessHandler(self.corr_params)
 
         success, elapsed = handler.run()
@@ -178,6 +241,8 @@ class Test:
         self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = success
 
     def save(self) -> None:
+        """Write the result JSON in the output folder.
+        """
         results_path = os.path.join(self.output_path, 'results.json')
 
         with open(results_path, 'w+') as f:

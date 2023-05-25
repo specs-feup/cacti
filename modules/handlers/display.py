@@ -15,23 +15,62 @@ INDENT = 4 * ' '
 
 
 class DisplayHandler:
+    """Module responsible for displaying the contents of a test.
+    
+    Attributes:
+        path (str): The path to the test (source file).
+        test (dict): The dictionary object that contains the result of the test.
+    """
     def __init__(self, path: str, test: dict) -> None:
+        """Initialize the DisplayHandler instance.
+        
+        Args:
+            path (str): The value for path.
+            test (dict): The value for test.
+        """
         self.path = path
         self.test = test
 
     def test_passed(self, test: str, time: float) -> str:
+        """Compute the string that gives information about a successful transpilation task.
+
+        Args:
+            test (str): The successful transpilation task.
+            time (float): The time it took for the task to execute.
+        """
         return f"{2*INDENT}{CHECKMARK} " + Style.DIM + Fore.WHITE + test + f" passed successfully ({str(time)}ms)" + Style.RESET_ALL
 
     def test_failed(self, test: str) -> str:
+        """Compute the string that gives information about an unsuccessful transpilation task.
+
+        Args:
+            test (str): The unsuccessful transpilation task.
+        """
         return f"{2*INDENT}{ERROR} " + Style.DIM + Fore.WHITE + test + f" failed" + Style.RESET_ALL
 
     def test_unknown(self, test: str) -> str:
+        """Compute the string that gives information about an unknown (not executed) transpilation task. 
+        
+        Args:
+            test (str): The unknown transpilation task.
+        """
         return f"{2*INDENT}{SQUARE} {test} was not run"
     
     def formatted_path(self) -> str:
+        """Pretty prints the path of the test.
+        """
         return Fore.WHITE + Style.BRIGHT + self.path + Style.RESET_ALL
 
     def test_results(self, passed: int, failed: int) -> tuple:
+        """Computes the strings that contain information about the number of tests that passed and failed.
+
+        Args:
+            passed (int): The number of succesful tasks.
+            failed (int): The number of unsuccessful tasks.
+        
+        Returns:
+            tuple: A pair that contains information about the number of tests that passed and failed.
+        """
         passed_str = CHECKMARK + " " + Style.BRIGHT + \
             Fore.GREEN + str(passed) + " tests passed" + Style.RESET_ALL
         failed_str = ERROR + " " + Style.BRIGHT + \
@@ -46,6 +85,8 @@ class DisplayHandler:
         return self.test[test_kind][KEY_SUCCESS]
 
     def run(self):
+        """Execute the handler.
+        """
         parsing = self.test_unknown('parsing')
         codegen = self.test_unknown('codegen')
         idempotency = self.test_unknown('idempotency')
