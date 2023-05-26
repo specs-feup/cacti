@@ -1,6 +1,7 @@
 import subprocess
 
 from clava import exec
+from artisan import exec as exec_artisan
 from modules.exception import InvalidTranspiler
 
 
@@ -16,6 +17,9 @@ def transpiler_cmd(transpiler: str, params: dict) -> list:
 
     if transpiler == 'clava':
         return exec.clava(params)
+    if transpiler == 'artisan':
+        return exec_artisan.artisan(params)
+        
 
     raise InvalidTranspiler('Invalid transpiler: ' + transpiler)
 
@@ -33,5 +37,8 @@ class Command:
         proc.wait()
 
         stdout, stderr = proc.communicate()
+
+        print(stdout)
+        print(stderr)
 
         return proc.returncode, stdout, stderr

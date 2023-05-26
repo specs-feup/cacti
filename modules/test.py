@@ -66,6 +66,7 @@ class Test:
         self.source_path = source_path
         self.output_path = output_path
         self.curr_try = curr_try
+        self.transpiler = transpiler
 
         self.params = {
             PARAMS_FILE: self.source_path,
@@ -84,7 +85,7 @@ class Test:
 
     def execute(self) -> None:
         # test the parsing and code generation
-        args = transpiler_cmd('clava', self.params)
+        args = transpiler_cmd(self.transpiler, self.params)
 
         cmd = Command(args)
 

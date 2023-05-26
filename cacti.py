@@ -65,8 +65,9 @@ if __name__ == '__main__':
         
         test = Test(source_path, output_path, TRANSPILER, 0)
 
+    
         test.execute()
-
+        
         test.print()
 
         test.save()
