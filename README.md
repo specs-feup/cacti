@@ -23,6 +23,24 @@ As the name suggests, CACTI wishes to study and compare the capabilities of diff
 - <a href="https://sigarra.up.pt/feup/pt/func_geral.formview?p_codigo=519965">João Bispo</a> - Faculty of Engineering, University of Porto, Portugal
 - <a href="https://sigarra.up.pt/feup/pt/func_geral.formview?p_codigo=662695">Luís Sousa</a> - Faculty of Engineering, University of Porto, Portugal
 
+## How to run
+
+In order to launch CACTI, you may run the following command:
+
+```
+$ python3 cacti.py -S <source_path> -T <transpiler_name>
+```
+
+CACTI offers a sample of mandatory arguments (like the ones above, `-S` and `-T`), as well as some additional flags, in order to customize the output. Below is an explanation of the current implemented arguments and flags:
+- `-S <source_path>` - specify the path to the source files which are to be tested
+- `-T <transpiler>` - the name of the transpiler which is to be tested
+- `-vi`, `-vc` - enable verbose idempotency & correctness, respectively
+- `-std <CXX>` - specify the C/C++ standard to be used
+- `-opt <O>` - specify the optimization flag that is to be used by Clang's `emit_llvm` flag (e.g, `O0`)
+- `it <N>` - specify the maximum number of idempotency tries 
+
+*Note: in order to run it is necessary to have Python 3 or above.*
+
 ## Sources
 
 - [cppreference](https://en.cppreference.com) - 
