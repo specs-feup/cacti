@@ -82,7 +82,9 @@ class DisplayHandler:
         return test_kind in self.test.keys()
 
     def success(self, test_kind: str) -> bool:
-        return self.test[test_kind][KEY_SUCCESS]
+        if KEY_SUCCESS in self.test[test_kind] and self.test[test_kind][KEY_SUCCESS] != "":
+            return self.test[test_kind][KEY_SUCCESS]
+        return False
 
     def run(self):
         """Execute the handler.
@@ -101,31 +103,31 @@ class DisplayHandler:
             if self.success(KEY_TEST_PARSING):
                 parsing = self.test_passed('parsing', self.test[KEY_TEST_PARSING][KEY_TIME])
                 passed += 1
-            else:
+            elif self.test[KEY_TEST_PARSING][KEY_SUCCESS] is False:
                 parsing = self.test_failed('parsing')
                 failed += 1
 
         if self.contains(KEY_TEST_CODEGEN):
-            if self.success(KEY_TEST_CODEGEN):
+            if self.success(KEY_TEST_CODEGEN) is True:
                 codegen = self.test_passed('codegen', self.test[KEY_TEST_CODEGEN][KEY_TIME])
                 passed += 1
-            else:
+            elif self.test[KEY_TEST_CODEGEN][KEY_SUCCESS] is False:
                 codegen = self.test_failed('codegen')
                 failed += 1
 
         if self.contains(KEY_TEST_IDEMPOTENCY):
-            if self.success(KEY_TEST_IDEMPOTENCY):
+            if self.success(KEY_TEST_IDEMPOTENCY) is True:
                 idempotency = self.test_passed('idempotency', 0.0)
                 passed += 1
-            else:
+            elif self.test[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] is False:
                 idempotency = self.test_failed('idempotency')
                 failed += 1
 
         if self.contains(KEY_TEST_CORRECTNESS):
-            if self.success(KEY_TEST_CORRECTNESS):
+            if self.success(KEY_TEST_CORRECTNESS) is True:
                 correctness = self.test_passed('correctness', self.test[KEY_TEST_CORRECTNESS][KEY_TIME])
                 passed += 1
-            else:
+            elif self.test[KEY_TEST_CORRECTNESS][KEY_SUCCESS] is False:
                 correctness = self.test_failed('correctness')
                 failed += 1
 
