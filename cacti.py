@@ -94,7 +94,7 @@ if __name__ == '__main__':
     for source_path in paths:        
         rel_path = source_path[len(INPUT_FOLDER):]
         
-        aux_path = 'output' + rel_path[0:len(rel_path) - 7]
+        aux_path = 'output/' + TRANSPILER + "/" + rel_path[0:len(rel_path) - 7]
         
         output_path = os.path.join(INPUT_FOLDER, aux_path)
         

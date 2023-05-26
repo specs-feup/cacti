@@ -2,6 +2,7 @@ import subprocess
 
 from clava import exec as clava_exec
 from cetus import exec as cetus_exec
+from artisan import exec as artisan_exec
 
 def diff(file1: str, file2: str) -> list:
     """Compute the arguments for the `diff` command to be executed on two files.
@@ -47,13 +48,16 @@ def transpiler_cmd(transpiler: str, params: dict) -> list:
         return clava_exec.clava(params)
     elif transpiler == 'cetus':
         return cetus_exec.cetus(params)
+    elif transpiler == 'artisan':
+        return artisan_exec.artisan(params)
     
     """
     command_module = __import__(transpiler + ".exec")
     func = getattr(command_module, transpiler)
     return func(params)
     """
-    raise InvalidTranspiler('Invalid transpiler: ' + transpiler)
+        
+        
 
 
 class Command:
@@ -84,6 +88,7 @@ class Command:
         proc.wait()
 
         stdout, stderr = proc.communicate()
+
 
         return proc.returncode, stdout, stderr
  
