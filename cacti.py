@@ -29,7 +29,7 @@ def find_source_files(root: str):
 
 if __name__ == '__main__':
     if (len(os.sys.argv) < 3):
-        print("Usage:\n$ python3 cacti.py <test_folder> <transpiler>")
+        print("usage: cacti.py [-h] -S PATH -T TRANSPILER [-std [STD]] [-it [IT]] [-opt [{O0,O2,O3}]] [-vi] [-vc]")
         exit(1)
 
     parser = argparse.ArgumentParser(description='Script to run CACTI')
