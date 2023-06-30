@@ -19,8 +19,8 @@ def get_file_extension(standard: str) -> str:
 
 
 def find_source_files(root: str):
-    return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith('.cpp')]
-    """Fetches all the C++ source files to be tested by CACTI.
+    return [(subdir + os.sep + file) for subdir, _, files in os.walk(root) for file in files if file.endswith('.cpp') or file.endswith('.c')]
+    """Fetches all the C/C++ source files to be tested by CACTI.
     
     Args:
         root: The path to the root directory where all of the source files are located.
@@ -68,6 +68,7 @@ if __name__ == '__main__':
     # add optional arguments
     parser.add_argument('-i', '--it', '--idempotency-tries', dest='it', nargs='?', const='id_tries', help='number of idempotency tries')
     parser.add_argument('-o', '--opt', '--optimize', dest='opt', nargs='?', choices=['O0', 'O2', 'O3'],  default='O0', help='optimization flag for emit_llvm')
+    parser.add_argument('--of', '--output-folder', dest="output_folder", type=str, default=os.getcwd(), nargs='?', const='')
 
     std_arguments_group = parser.add_mutually_exclusive_group()
     std_arguments_group.add_argument('--std', nargs='?', const='default_std', help='C/C++ standard')
@@ -128,10 +129,10 @@ if __name__ == '__main__':
 
     for source_path in paths:        
         rel_path = source_path[len(INPUT_FOLDER):]
+
+        aux_path = 'output/' + TRANSPILER + "/" + rel_path[0:]
         
-        aux_path = 'output/' + TRANSPILER + "/" + rel_path[0:len(rel_path) - 7]
-        
-        output_path = os.path.join(INPUT_FOLDER, aux_path)
+        output_path = os.path.join(args.output_folder, aux_path)
         
         if not os.path.exists(output_path):
             os.makedirs(output_path)
