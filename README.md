@@ -34,12 +34,13 @@ $ python3 cacti.py -S <source_path> -T <transpiler_name>
 CACTI offers a sample of mandatory arguments (like the ones above, `-S` and `-T`), as well as some additional flags, in order to customize the output. Below is an explanation of the current implemented arguments and flags:
 - `-S <source_path>` - specify the path to the source files which are to be tested
 - `-T <transpiler>` - the name of the transpiler which is to be tested
-- `-vi`, `-vc` - enable verbose idempotency & correctness, respectively
-- `-std <CXX>` - specify the C/C++ standard to be used
-- `-opt <O>` - specify the optimization flag that is to be used by Clang's `emit_llvm` flag (e.g, `O0`)
-- `it <N>` - specify the maximum number of idempotency tries 
+- `--vi`, `--vc` - enable verbose idempotency & correctness, respectively
+- `--std <CXX>` - specify the C/C++ standard to be used
+- `--opt <O>` - specify the optimization flag that is to be used by Clang's `emit_llvm` flag (e.g, `O0`)
+- `--it <N>` - specify the maximum number of idempotency tries 
+- `--of <path>` - specify the directory where the output should be generated in. Current working directory by default.
 
-*Note: in order to run it is necessary to have Python 3 or above.*
+*Note: in order to run it is necessary to have Python 3.10.6 or above.*
 
 ## Sources
 
