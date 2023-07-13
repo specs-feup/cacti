@@ -1,5 +1,6 @@
 import os
 import argparse
+import progressbar
 
 from modules.test import *
 from modules.command import *
@@ -127,7 +128,14 @@ if __name__ == '__main__':
     
     paths.sort()
 
-    for source_path in paths:        
+    widgets = [ 
+        progressbar.Percentage(), ' (', progressbar.SimpleProgress(), ") ",
+        progressbar.GranularBar(),
+        progressbar.Timer(),
+        progressbar.ETA()
+    ]
+
+    for source_path in progressbar.progressbar(paths, widgets=widgets, redirect_stdout=True):        
         rel_path = source_path[len(INPUT_FOLDER):]
 
         aux_path = 'output/' + TRANSPILER + "/" + rel_path[0:]
