@@ -119,7 +119,7 @@ def snakeToCamelCase(string: str) -> str:
 
 
 def latexBool(bool: bool) -> str:
-    """Converts a boolean value to a String that can be used in LaTeX. The word is colored depending on the boolean value."""
+    """Converts a boolean value to a String that can be used in LaTeX. The word is colored depending on the boolean value. Also updates global counters of tests passed/failed..."""
     if bool is True:
         latexBool = r"\textcolor{green}{True}"
         global trueCounter
@@ -135,7 +135,6 @@ def latexBool(bool: bool) -> str:
         global unknownCounter
         unknownCounter += 1
         return latexBool
-
 
 def getStand(stand: Standard) -> int:
     return standardNameToIndex[stand.name]
@@ -188,6 +187,126 @@ def processFile(file_path: str) -> Test:
         result = Test(name, tests)
         return result
 
+def getAllTests(standards: list[Standard]) -> list[Test]:
+    tests = []
+    for standard in standards:
+        tests.extend(standard.tests)
+    return tests
+
+def findMostCompleteTestInfo(tests: list[Test]) -> tuple[Test, int]:
+    exampleTest = None
+    maxTestPhases = 0
+    for test in tests:
+        if (len(test.details) > maxTestPhases):
+            maxTestPhases = len(test.details)
+            exampleTest = test
+    return (exampleTest, maxTestPhases)
+
+def writeStandardTestResultRows(standard: Standard, f) -> None:
+    for test in standard.tests:
+        row = r"\textbf{{\fontsize{10}{12}\selectfont " + \
+            escapeBackslash(test.name) + r"}}"
+        for details in test.details:
+            if (details.tries == -1):
+                row += r'& {0}&{1}'.format(details.time if details.time != -1 else 'N/A',
+                                            latexBool(details.success))
+            else:
+                row += r'& {0}&{1}'.format(details.tries,
+                                            latexBool(details.success))
+        row += r' \\[0.5ex]'
+        f.write(row+"\n")
+
+def writeStandards(standards: list[Standard], f) -> None:
+
+    # since the first group of tests in some standards
+    # fails on the Parsing, we need to retrieve all the possible tests
+    # so the table is correctly formed
+    exampleTest, maxNumOfTests = findMostCompleteTestInfo(getAllTests(standards))
+
+    for standard in standards:
+        f.write(r"\section{" + standard.name + r"}"+"\n")
+        # start table with a column for source file's name and 2 columns per test
+        f.write(r"\begin{xltabular}{\textwidth}{l")
+
+        for x in range(1, maxNumOfTests + 1):
+            f.write("cc")
+        f.write(r"}" + "\n"+(r"\toprule")+"\n")
+
+        # Write column with source files' names
+        f.write(r"\multicolumn{1}{Y}{}"+"\n")
+
+        # Writing header and creating test result columns witchery
+        for details in exampleTest.details:
+            f.write(r"& \multicolumn{2}{@{}c}{\textbf{" +
+                    "{0}".format(snakeToCamelCase(removeTestPrefix(details.name))) + r"}}")
+
+        f.write(r"\\"+"\n")
+        f.write(r"\cmidrule{2-"+str(2*len(exampleTest.details)+1)+r"}")
+
+        for details in exampleTest.details:
+            if (details.tries == -1):
+                f.write(
+                    r"&\multicolumn{1}{@{}c}{Time}&\multicolumn{1}{@{}c}{Success}")
+            else:
+                f.write(
+                    r"&\multicolumn{1}{@{}c}{Tries}&\multicolumn{1}{@{}c}{Success}")
+        f.write(r"\\"+"\n")
+        f.write(r"\midrule"+"\n")
+        f.write(r"\endhead")
+
+        
+        # writing result rows
+        writeStandardTestResultRows(standard, f)
+
+        f.write(r"\bottomrule"+"\n")
+        f.write(r"\end{xltabular}"+"\n")
+        f.write(r"\newpage" + "\n")
+
+def getAbsolutePercentageOfTestsPassed(tests: list[Test], numberOfTotalTestPhases: int) -> float:
+    """Calculates the theoretically maximum number of test phases that could be passed, then divides the number of actually passed test phases by that number.
+    Counts test phases that weren't run as failed.
+    """
+
+    maxPossiblePassedTestPhases: int = len(tests) * numberOfTotalTestPhases
+    passedTestPhases: int = 0
+    for test in tests:
+        for details in test.details:
+            if details.success == True: passedTestPhases += 1
+    return (passedTestPhases / maxPossiblePassedTestPhases) * 100
+
+def getPercentageOfTestsPassed(tests: list[Test]) -> float:
+    """Checks how many test phases succeedeed, how many failed and calculates the percentage based on those two alone.
+    Doesn't count with test phases that weren't run.
+    """
+    passedTestPhases: int = 0
+    failedTestPhases: int = 0
+    for test in tests:
+        for details in test.details:
+            if details.success == True: passedTestPhases += 1
+            elif details.success == False: failedTestPhases += 1
+    return (passedTestPhases / (passedTestPhases + failedTestPhases)) * 100
+
+def writePercentages(standards: list[Standard], maxTestPhases: int, f) -> None:
+    f.write(r"\section{Percentages}")
+    f.write("Percentage of passed tests:\n")
+    f.write(str(round(trueCounter/(falseCounter+trueCounter)*100,2))+r" \%")
+    """
+    f.write(r"\section{Percentages}")
+    f.write(r"Note: In Absolute percentages test phases that were not run count as failed.\n\n")
+    f.write(r"Absolute percentage of passed tests:\n")
+    f.write(str(round(getAbsolutePercentageOfTestsPassed(getAllTests(standards), maxTestPhases), 2))+r" \%\n\n")
+    f.write(r"Percentage of passed tests:\n")
+    f.write(str(round(getPercentageOfTestsPassed(getAllTests(standards)), 2))+r" \%")
+    for standard in standards:
+        f.write(escapeBackslash("\\subsection{" + standard.name + "}"))
+        f.write(r"Absolute percentage of passed tests:\n")
+        f.write(str(round(getAbsolutePercentageOfTestsPassed(standard.tests, maxTestPhases), 2))+r" \%")
+        f.write(r"Percentage of passed tests:\n")
+        f.write(str(round(getPercentageOfTestsPassed(standard.tests), 2))+r" \%")
+    """
+
+
+
 
 if __name__ == '__main__':
 
@@ -222,66 +341,7 @@ if __name__ == '__main__':
     standards: list[Standard] = processDirectory(general_path)[1]
 
     standards.sort(key=lambda x: getStand(x))
-
-    # since the first group of tests in some standards
-    # fails on the Parsing, we need to retrieve all the possible tests
-    # so the table is correctly formed
-
-    exampleTest = None
-    maxNumOfTests = 0
-    for standard in standards:
-        for test in standard.tests:
-            if (len(test.details) > maxNumOfTests):
-                maxNumOfTests = len(test.details)
-                exampleTest = test
-
-    for standard in standards:
-        f.write(r"\section{" + standard.name + r"}"+"\n")
-        # start table with a column for source file's name and 2 columns per test
-        f.write(r"\begin{xltabular}{\textwidth}{l")
-
-        for x in range(1, maxNumOfTests + 1):
-            f.write("cc")
-        f.write(r"}" + "\n"+(r"\toprule")+"\n")
-
-        # column with source files' names
-        f.write(r"\multicolumn{1}{Y}{}"+"\n")
-
-        for details in exampleTest.details:
-            f.write(r"& \multicolumn{2}{@{}c}{\textbf{" +
-                    "{0}".format(snakeToCamelCase(removeTestPrefix(details.name))) + r"}}")
-
-        f.write(r"\\"+"\n")
-        f.write(r"\cmidrule{2-"+str(2*len(exampleTest.details)+1)+r"}")
-
-        for details in exampleTest.details:
-            if (details.tries == -1):
-                f.write(
-                    r"&\multicolumn{1}{@{}c}{Time}&\multicolumn{1}{@{}c}{Success}")
-            else:
-                f.write(
-                    r"&\multicolumn{1}{@{}c}{Tries}&\multicolumn{1}{@{}c}{Success}")
-        f.write(r"\\"+"\n")
-        f.write(r"\midrule"+"\n")
-        f.write(r"\endhead")
-
-        # writing result rows
-        for test in standard.tests:
-            row = r"\textbf{{\fontsize{10}{12}\selectfont " + \
-                escapeBackslash(test.name) + r"}}"
-            for details in test.details:
-                if (details.tries == -1):
-                    row += r'& {0}&{1}'.format(details.time if details.time != -1 else 'N/A',
-                                               latexBool(details.success))
-                else:
-                    row += r'& {0}&{1}'.format(details.tries,
-                                               latexBool(details.success))
-            row += r' \\[0.5ex]'
-            f.write(row+"\n")
-        f.write(r"\bottomrule"+"\n")
-        f.write(r"\end{xltabular}"+"\n")
-        f.write(r"\newpage" + "\n")
-    f.write(r"\section{Percentages}")
-    f.write("Percentage of passed tests:\n")
-    f.write(str(round(trueCounter/(falseCounter+trueCounter)*100, 2))+r" \%")
+    _, maxTestPhases = findMostCompleteTestInfo(getAllTests(standards))
+    writeStandards(standards, f)
+    writePercentages(standards, maxTestPhases, f)
     f.write(r"\end{document}")
