@@ -31,12 +31,13 @@ class standards(Enum):
 
 class TestDetails:
     """Represents the details of one of the 4 test phases: Parsing, Code Generation, Idempotency or Correctness.
+    Attention should be payed in respects to the time and tries attributes, as the idempotency test phase does not posses a "time" attribute and all other test phases do not possess a "tries" attribute.
 
     Attributes:
         name (string): The name of the test phase (parsing, code generation, idempotency or correctness).
         success (bool): Whether this test phase was successful or not.
         time (int): How many seconds it took the compiler to perform this task. Is -1 if the attribute is not applicable to the test or an error occurred. 
-        tries (int): How many iterations it took for the code generation to converge. Is -1 if the attribute is not applicable to the test or an error occurred or the test failed. 
+        tries (int): How many iterations it took for the code generation to converge. Is -1 if the attribute is not applicable to the test. 
     """
 
     def __init__(self, name: str, success: bool, time: int = -1, tries: int = -1):
@@ -243,7 +244,7 @@ if __name__ == '__main__':
             f.write("cc")
         f.write(r"}" + "\n"+(r"\toprule")+"\n")
 
-        # column with source file's name
+        # column with source files' names
         f.write(r"\multicolumn{1}{Y}{}"+"\n")
 
         for details in exampleTest.details:
@@ -270,7 +271,7 @@ if __name__ == '__main__':
                 escapeBackslash(test.name) + r"}}"
             for details in test.details:
                 if (details.tries == -1):
-                    row += r'& {0}&{1}'.format(details.time,
+                    row += r'& {0}&{1}'.format(details.time if details.time != -1 else 'N/A',
                                                latexBool(details.success))
                 else:
                     row += r'& {0}&{1}'.format(details.tries,
