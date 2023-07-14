@@ -95,25 +95,29 @@ falseCounter = 0
 unknownCounter = 0
 
 
-def latexTest(string):
+def removeTestPrefix(string: str) -> str:
+    """Removes test_ from the given string."""
+
     # remove test_
     reducedString = string[5:]
-    latexString = reducedString.replace("_", "\_").capitalize()
+    latexString = reducedString.replace("_", "\_")
     return latexString
 
 
-def latexSource(string):
-    latexString = string.replace("_", "\_").capitalize()
+def escapeBackslash(string: str) -> str:
+    """Adds a \\ before every underscore so that it is interpreted correctly in LaTeX."""
+
+    latexString = string.replace("_", "\_")
     return latexString
 
 
-def snakeToCamelCase(string):
+def snakeToCamelCase(string: str) -> str:
     """Splits the given string on underscores and returns the equivalent in Camel Case"""
     words = list(map(lambda x: x.capitalize(), string.split("\_")))
     return "".join(words)
 
 
-def latexBool(bool) -> str:
+def latexBool(bool: bool) -> str:
     """Converts a boolean value to a String that can be used in LaTeX. The word is colored depending on the boolean value."""
     if bool is True:
         latexBool = r"\textcolor{green}{True}"
@@ -132,31 +136,34 @@ def latexBool(bool) -> str:
         return latexBool
 
 
-def getStand(stand):
+def getStand(stand: Standard) -> int:
     return standardNameToIndex[stand.name]
 
 
-def processDirectory(general_path) -> tuple[list[Test], list[Standard]]:
-    results = []
-    standards = []
+def processDirectory(general_path: str) -> tuple[list[Test], list[Standard]]:
+    # Ensure general path is absolute and minimal
+    general_path = os.path.abspath(general_path)
+
+    tests: list[Test] = []
+    standards: list[Standard] = []
     for item in os.listdir(general_path):
         itemPath = os.path.join(general_path, item)
         if os.path.isdir(itemPath):
-            if item in standardNameToIndex:  # checks if item corresponds to a standard
-                results.extend(processDirectory(itemPath)[0])
-                results.sort(key=lambda x: x.name)
-                stand = Standard(item, results)
-                results = []
+            if item in standardNameToIndex:  # Checks if the item's name corresponds to a standard
+                tests.extend(processDirectory(itemPath)[0])
+                tests.sort(key=lambda x: x.name)
+                stand = Standard(item, tests)
+                tests = []
                 standards.append(stand)
             else:
-                results.extend(processDirectory(itemPath)[0])
+                tests.extend(processDirectory(itemPath)[0])
         elif os.path.isfile(itemPath) and item.endswith('.json'):
             result = processFile(itemPath)
-            results.append(result)
-    return (results, standards)
+            tests.append(result)
+    return (tests, standards)
 
 
-def processFile(file_path):
+def processFile(file_path: str) -> Test:
     with open(file_path) as json_file:  # reads the JSON file
         parsedJson = json.load(json_file)
         name = ""
@@ -213,31 +220,22 @@ if __name__ == '__main__':
 
     standards: list[Standard] = processDirectory(general_path)[1]
 
-    for elem in standards:
-        print(elem.__str__())
-
     standards.sort(key=lambda x: getStand(x))
 
     # since the first group of tests in some standards
     # fails on the Parsing, we need to retrieve all the possible tests
     # so the table is correctly formed
 
-    exampleResult = []
+    exampleTest = None
     maxNumOfTests = 0
     for standard in standards:
-        """ Tentative refactor of this code is below
-                for j in range(0, len(standard.tests)):
-                    if (len(standard.tests[j].details) > maxNumOfTests):
-                        maxNumOfTests = len(standard.tests[j].details)
-                        exampleResult = standard.tests[j]
-        """
         for test in standard.tests:
             if (len(test.details) > maxNumOfTests):
                 maxNumOfTests = len(test.details)
-                exampleResult = test
+                exampleTest = test
 
     for standard in standards:
-        f.write(r"\section{" + standard.name.capitalize() + r"}"+"\n")
+        f.write(r"\section{" + standard.name + r"}"+"\n")
         # start table with a column for source file's name and 2 columns per test
         f.write(r"\begin{xltabular}{\textwidth}{l")
 
@@ -248,14 +246,14 @@ if __name__ == '__main__':
         # column with source file's name
         f.write(r"\multicolumn{1}{Y}{}"+"\n")
 
-        for details in exampleResult.details:
+        for details in exampleTest.details:
             f.write(r"& \multicolumn{2}{@{}c}{\textbf{" +
-                    "{0}".format(snakeToCamelCase(latexTest(details.name))) + r"}}")
+                    "{0}".format(snakeToCamelCase(removeTestPrefix(details.name))) + r"}}")
 
         f.write(r"\\"+"\n")
-        f.write(r"\cmidrule{2-"+str(2*len(exampleResult.details)+1)+r"}")
+        f.write(r"\cmidrule{2-"+str(2*len(exampleTest.details)+1)+r"}")
 
-        for details in exampleResult.details:
+        for details in exampleTest.details:
             if (details.tries == -1):
                 f.write(
                     r"&\multicolumn{1}{@{}c}{Time}&\multicolumn{1}{@{}c}{Success}")
@@ -269,7 +267,7 @@ if __name__ == '__main__':
         # writing result rows
         for test in standard.tests:
             row = r"\textbf{{\fontsize{10}{12}\selectfont " + \
-                latexSource(test.name) + r"}}"
+                escapeBackslash(test.name) + r"}}"
             for details in test.details:
                 if (details.tries == -1):
                     row += r'& {0}&{1}'.format(details.time,
