@@ -13,7 +13,7 @@ KEY_ARG_IT  = 'it'
 KEY_ARG_OPT = 'opt'
 KEY_FLAG_VI = 'vi'
 KEY_FLAG_VC = 'vc'
-SUPPORTED_STANDARDS: list[str] = ['c89', 'c95', 'c99', 'c11', 'c17', 'c23', 'C++98' ,'C++11', 'C++20']
+SUPPORTED_STANDARDS: list[str] = ['c89', 'c95', 'c99', 'c11', 'c17', 'c23', 'c++98', 'c++11', 'c++14', 'c++17', 'c++20']
 
 def get_file_extension(standard: str) -> str:
         return ".cpp" if standard.lower().find("c++") != -1 else ".c"
