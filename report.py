@@ -31,7 +31,6 @@ true_counter = 0
 false_counter = 0
 unknown_counter = 0
 
-
 def latexTest(string):
     #remove test_
     reducedString= string[5:]
@@ -175,7 +174,7 @@ if __name__ == '__main__':
                 exampleResult = i.result[j]
 
     for standard in standards:
-        f.write(r"\section{"+ standard.name + r"}"+"\n")
+        f.write(r"\section{"+ standard.name.capitalize() + r"}"+"\n")
         # start table with a column for source file's name and 2 columns per test  
         f.write(r"\begin{xltabular}{\textwidth}{l")
 
@@ -188,23 +187,23 @@ if __name__ == '__main__':
         f.write(r"\multicolumn{1}{Y}{}"+"\n")
 
         for test in exampleResult.tests:
-            f.write(r"& \multicolumn{2}{Y}{\textbf{"+ "{0}".format(latexCamelCase(latexTest(test.name)))+ r"}}")
+            f.write(r"& \multicolumn{2}{@{}c}{\textbf{" + "{0}".format(latexCamelCase(latexTest(test.name))) + r"}}")
 
         f.write(r"\\"+"\n")
         f.write(r"\cmidrule{2-"+str(2*len(exampleResult.tests)+1)+r"}")
 
         for test in exampleResult.tests:
             if (test.tries == -1):
-                f.write(r"&Time&Success")
+                f.write(r"&\multicolumn{1}{@{}c}{Time}&\multicolumn{1}{@{}c}{Success}")
             else:
-                f.write(r"&Tries&Success")
+                f.write(r"&\multicolumn{1}{@{}c}{Tries}&\multicolumn{1}{@{}c}{Success}")
         f.write(r"\\"+"\n")
         f.write(r"\midrule"+"\n")
         f.write(r"\endhead")
 
         # writing result rows
         for result in standard.result:
-            row= r"\textbf{" + latexSource(result.name) + r"}"
+            row = r"\textbf{{\fontsize{10}{12}\selectfont " + latexSource(result.name) + r"}}"
             for test in result.tests:
                 if (test.tries == -1):
                     row+= r'& {0}&{1}'.format(test.time, latexBool(test.success))
