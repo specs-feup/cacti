@@ -4,6 +4,7 @@ from clava import exec as clava_exec
 from cetus import exec as cetus_exec
 from artisan import exec as artisan_exec
 
+
 def diff(file1: str, file2: str) -> list:
     """Compute the arguments for the `diff` command to be executed on two files.
 
@@ -30,34 +31,33 @@ def emit_llvm(source: str, output: str, o_flag: str) -> list:
     """
     return ["clang", "-S", source, "-emit-llvm", o_flag, "-o", output]
 
+
 def transpiler_cmd(transpiler: str, params: dict) -> list:
     """Computes the arguments for the command that launches the transpiler subprocess.
-    
+
     Args:
         transpiler (str): The name of the transpiler that will be launched.
         params (dict): Parameters that each transpiler must oblige to in order to properly execute tests.
-    
+
     Returns:
         list: A list containing the arguments for this command.
 
     Raises:
         InvalidTranspiler: If the transpiler is invalid.
     """
-    
+
     if transpiler == 'clava':
         return clava_exec.clava(params)
     elif transpiler == 'cetus':
         return cetus_exec.cetus(params)
     elif transpiler == 'artisan':
         return artisan_exec.artisan(params)
-    
+
     """
     command_module = __import__(transpiler + ".exec")
     func = getattr(command_module, transpiler)
     return func(params)
     """
-        
-        
 
 
 class Command:
@@ -66,12 +66,13 @@ class Command:
     Attributes:
         args (list): The list of arguments of the command to execute.
     """
+
     def __init__(self, args: list) -> None:
         """Initialize the Command instance.
 
         Attributes:
             args (list): The value for args.
-        """        
+        """
         self.args = args
 
     def run(self) -> tuple:
@@ -89,6 +90,4 @@ class Command:
 
         stdout, stderr = proc.communicate()
 
-
         return proc.returncode, stdout, stderr
- 

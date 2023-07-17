@@ -1,7 +1,5 @@
 import os
 import json
-import time
-import filecmp
 
 from modules.command import *
 
@@ -181,7 +179,7 @@ class Test:
         """Process the output JSON.
 
         Processes the output JSON, so that it can be interpreted as a Python dictionary in future computations.
-        
+
         Args:
             out (str): The output JSON.
             err (str): Error messages written by the transpiler to STDERR, which are to be included in the final result JSON.
@@ -203,7 +201,7 @@ class Test:
 
         Args:
             test_kind (str): The transpilation task.
-        
+
         Returns:
             bool: True if the result contains the transpilation task as a key, False otherwise.
         """
@@ -214,7 +212,7 @@ class Test:
 
         Args:
             test_kind (str): The transpilation task.
-        
+
         Returns:
             bool: True if the task was successful, False otherwise.
         """
