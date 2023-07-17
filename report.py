@@ -97,7 +97,11 @@ unknownCounter = 0
 
 
 def removeTestPrefix(string: str) -> str:
-    """Removes test_ from the given string."""
+    """Removes test_ from the given string.
+    
+    Attributes:
+        string (str): the string to be transformed.
+    """
 
     # remove test_
     reducedString = string[5:]
@@ -106,20 +110,31 @@ def removeTestPrefix(string: str) -> str:
 
 
 def escapeBackslash(string: str) -> str:
-    """Adds a \\ before every underscore so that it is interpreted correctly in LaTeX."""
+    """Adds a \\ before every underscore so that it is interpreted correctly in LaTeX.
+        Attributes:
+        string (str): the string to be transformed.
+    """
 
     latexString = string.replace("_", "\_")
     return latexString
 
 
 def snakeToCamelCase(string: str) -> str:
-    """Splits the given string on underscores and returns the equivalent in Camel Case"""
+    """Splits the given string on underscores and returns the equivalent in Camel Case
+    
+    Attributes:
+        string (str): the string to be converted from snake_case to camelCase.
+    """
     words = list(map(lambda x: x.capitalize(), string.split("\_")))
     return "".join(words)
 
 
 def latexBool(bool: bool) -> str:
-    """Converts a boolean value to a String that can be used in LaTeX. The word is colored depending on the boolean value. Also updates global counters of tests passed/failed..."""
+    """Converts a boolean value to a String that can be used in LaTeX. The word is colored depending on the boolean value. Also updates global counters of tests passed/failed...
+    
+    Attributes:
+        bool (bool): the value to be converted.
+    """
     if bool is True:
         latexBool = r"\textcolor{green}{True}"
         global trueCounter
@@ -136,18 +151,29 @@ def latexBool(bool: bool) -> str:
         unknownCounter += 1
         return latexBool
 
+
 def getStand(stand: Standard) -> int:
+    """Gets the corresponding integer id of a given standard.
+
+    Attributes:
+        stand (Standard): the standard to be identified.
+    """
     return standardNameToIndex[stand.name]
 
 
-def processDirectory(general_path: str) -> tuple[list[Test], list[Standard]]:
+def processDirectory(generalPath: str) -> tuple[list[Test], list[Standard]]:
+    """Searches the directory recursively and generates a list with all the standards and their corresponding tests found.
+
+    Attributes:
+        generalPath (str): the path to the source directory. This directory should have as direct children directories whose names are reflective of the C/C++ standard used in the tests inside it.
+    """
     # Ensure general path is absolute and minimal
-    general_path = os.path.abspath(general_path)
+    generalPath = os.path.abspath(generalPath)
 
     tests: list[Test] = []
     standards: list[Standard] = []
-    for item in os.listdir(general_path):
-        itemPath = os.path.join(general_path, item)
+    for item in os.listdir(generalPath):
+        itemPath = os.path.join(generalPath, item)
         if os.path.isdir(itemPath):
             if item in standardNameToIndex:  # Checks if the item's name corresponds to a standard
                 tests.extend(processDirectory(itemPath)[0])
@@ -163,8 +189,13 @@ def processDirectory(general_path: str) -> tuple[list[Test], list[Standard]]:
     return (tests, standards)
 
 
-def processFile(file_path: str) -> Test:
-    with open(file_path) as json_file:  # reads the JSON file
+def processFile(filePath: str) -> Test:
+    """ Parses the contents of a results json file and returns the corresponding Test object.
+
+    Attributes:
+        filePath (str): the path to the results json file.
+    """
+    with open(filePath) as json_file:  # reads the JSON file
         parsedJson = json.load(json_file)
         name = ""
         time = ""
@@ -187,13 +218,27 @@ def processFile(file_path: str) -> Test:
         result = Test(name, tests)
         return result
 
+
 def getAllTests(standards: list[Standard]) -> list[Test]:
+    """Iterates over all the standards and flattens all their tests into a single list.
+    
+    Attributes:
+        standards (list[Standard]): the list that will be iterated over.
+    """
     tests = []
     for standard in standards:
         tests.extend(standard.tests)
     return tests
 
+
 def findMostCompleteTestInfo(tests: list[Test]) -> tuple[Test, int]:
+    """Searches all tests in the list and returns a tuple with the test that includes the highest amount of test phases in its details and the corresponding number of test phases.
+
+    Attributes:
+        tests (list[Test]): the list that will be iterated over to search for the most complete test.
+    
+    Returns: A tuple with the most complete Test found and the number of test phases present in the test's details.
+    """
     exampleTest = None
     maxTestPhases = 0
     for test in tests:
@@ -202,26 +247,40 @@ def findMostCompleteTestInfo(tests: list[Test]) -> tuple[Test, int]:
             exampleTest = test
     return (exampleTest, maxTestPhases)
 
-def writeStandardTestResultRows(standard: Standard, f) -> None:
-    for test in standard.tests:
-        row = r"\textbf{{\fontsize{10}{12}\selectfont " + \
-            escapeBackslash(test.name) + r"}}"
-        for details in test.details:
-            if (details.tries == -1):
-                row += r'& {0}&{1}'.format(details.time if details.time != -1 else 'N/A',
-                                            latexBool(details.success))
-            else:
-                row += r'& {0}&{1}'.format(details.tries,
-                                            latexBool(details.success))
-        row += r' \\[0.5ex]'
-        f.write(row+"\n")
+
+def writeStandardTestResultRow(test: Test, f) -> None:
+    """ Writes a row to be used in the Standard section's table with the test's results.
+
+    Attributes:
+        test (Test): the object that contains the information about the test result.
+        f (file): the file to be written in.
+    """
+    row = r"\textbf{{\fontsize{10}{12}\selectfont " + \
+        escapeBackslash(test.name) + r"}}"
+    for details in test.details:
+        if (details.tries == -1):
+            row += r'& {0}&{1}'.format(details.time if details.time != -1 else 'N/A',
+                                       latexBool(details.success))
+        else:
+            row += r'& {0}&{1}'.format(details.tries,
+                                       latexBool(details.success))
+    row += r' \\[0.5ex]'
+    f.write(row+"\n")
+
 
 def writeStandards(standards: list[Standard], f) -> None:
+    """Writes the Standards section of the LaTeX report. This includes creating and filling the table with the test results for every standard.
+
+    Attributes:
+        standards (list[Standard]): list of standards to include in this section.
+        f (file): file to write the section to.
+    """
 
     # since the first group of tests in some standards
     # fails on the Parsing, we need to retrieve all the possible tests
     # so the table is correctly formed
-    exampleTest, maxNumOfTests = findMostCompleteTestInfo(getAllTests(standards))
+    exampleTest, maxNumOfTests = findMostCompleteTestInfo(
+        getAllTests(standards))
 
     for standard in standards:
         f.write(r"\section{" + standard.name + r"}"+"\n")
@@ -254,58 +313,83 @@ def writeStandards(standards: list[Standard], f) -> None:
         f.write(r"\midrule"+"\n")
         f.write(r"\endhead")
 
-        
         # writing result rows
-        writeStandardTestResultRows(standard, f)
+        for test in standard.tests:
+            writeStandardTestResultRow(test, f)
 
         f.write(r"\bottomrule"+"\n")
         f.write(r"\end{xltabular}"+"\n")
         f.write(r"\newpage" + "\n")
 
-def getAbsolutePercentageOfTestsPassed(tests: list[Test], numberOfTotalTestPhases: int) -> float:
+
+def getAbsolutePercentageOfTestsPassed(tests: list[Test], maxTestPhases: int) -> float:
     """Calculates the theoretically maximum number of test phases that could be passed, then divides the number of actually passed test phases by that number.
     Counts test phases that weren't run as failed.
+
+    Attributes:
+        tests(list[Test]): list of tests to be used to calculate the absolute percentage of tests passed.
+        maxTestPhases (int): the maximum number of test phases that one test can run. E.g. Parsing, Code Generaiton, Idempotency and Correctness = 4.
     """
 
-    maxPossiblePassedTestPhases: int = len(tests) * numberOfTotalTestPhases
+    maxPossiblePassedTestPhases: int = len(tests) * maxTestPhases
     passedTestPhases: int = 0
     for test in tests:
         for details in test.details:
-            if details.success == True: passedTestPhases += 1
+            if details.success == True:
+                passedTestPhases += 1
     return (passedTestPhases / maxPossiblePassedTestPhases) * 100
+
 
 def getPercentageOfTestsPassed(tests: list[Test]) -> float:
     """Checks how many test phases succeedeed, how many failed and calculates the percentage based on those two alone.
     Doesn't count with test phases that weren't run.
+
+    Attributes:
+        tests (list[Test]): list of tests to be used to calculate the percentage of tests passed.
     """
     passedTestPhases: int = 0
     failedTestPhases: int = 0
     for test in tests:
         for details in test.details:
-            if details.success == True: passedTestPhases += 1
-            elif details.success == False: failedTestPhases += 1
+            if details.success == True:
+                passedTestPhases += 1
+            elif details.success == False:
+                failedTestPhases += 1
     return (passedTestPhases / (passedTestPhases + failedTestPhases)) * 100
 
+
 def writePercentages(standards: list[Standard], maxTestPhases: int, f) -> None:
-    f.write(r"\section{Percentages}")
-    f.write("Percentage of passed tests:\n")
-    f.write(str(round(trueCounter/(falseCounter+trueCounter)*100,2))+r" \%")
+    """Writes the Statistics section of the LaTeX report.
+
+    Attributes:
+        standards (list[Standard]): a list containing all the standards to be included in the percentage section.
+        maxTestsPhases (int): the maximum number of test phases that one test can run. E.g. Parsing, Code Generaiton, Idempotency and Correctness = 4.
+        f (file): the file to write the section to.
     """
+
     f.write(r"\section{Percentages}")
-    f.write(r"Note: In Absolute percentages test phases that were not run count as failed.\n\n")
-    f.write(r"Absolute percentage of passed tests:\n")
-    f.write(str(round(getAbsolutePercentageOfTestsPassed(getAllTests(standards), maxTestPhases), 2))+r" \%\n\n")
-    f.write(r"Percentage of passed tests:\n")
-    f.write(str(round(getPercentageOfTestsPassed(getAllTests(standards)), 2))+r" \%")
+    f.write(
+        "Note: In Absolute percentages test phases that were not run count as failed.\n\n")
+
+    f.write(escapeBackslash("\\subsection{Total}"))
+
+    f.write(r"\begin{itemize}")
+    f.write(r"\item " + "Absolute percentage of passed tests: ")
+    f.write(str(round(getAbsolutePercentageOfTestsPassed(
+        getAllTests(standards), maxTestPhases), 2))+"\\%\n\n")
+    f.write(r"\item " + "Percentage of passed tests: \n")
+    f.write(str(round(getPercentageOfTestsPassed(getAllTests(standards)), 2))+r"\%")
+    f.write(r"\end{itemize}")
+
     for standard in standards:
         f.write(escapeBackslash("\\subsection{" + standard.name + "}"))
-        f.write(r"Absolute percentage of passed tests:\n")
-        f.write(str(round(getAbsolutePercentageOfTestsPassed(standard.tests, maxTestPhases), 2))+r" \%")
-        f.write(r"Percentage of passed tests:\n")
-        f.write(str(round(getPercentageOfTestsPassed(standard.tests), 2))+r" \%")
-    """
-
-
+        f.write(r"\begin{itemize}")
+        f.write(r"\item " + "Absolute percentage of passed tests: ")
+        f.write(str(round(getAbsolutePercentageOfTestsPassed(
+            standard.tests, maxTestPhases), 2))+r"\%" + "\n\n")
+        f.write(r"\item " + "Percentage of passed tests: ")
+        f.write(str(round(getPercentageOfTestsPassed(standard.tests), 2))+r"\%")
+        f.write(r"\end{itemize}")
 
 
 if __name__ == '__main__':
