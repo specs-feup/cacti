@@ -44,6 +44,7 @@ CACTI offers a sample of mandatory arguments (like the ones above, `-S` and `-T`
 In order to run our project some dependencies are required:
 - Python 3.10.6 or above
 - The [Progressbar2](https://pypi.org/project/progressbar2/) pip package
+- The [colorama](https://pypi.org/project/colorama/) pip package
 - The transpilers that you wish to test (e.g. [clava](https://github.com/specs-feup/clava))
 
 Additionally, if you wish to convert the generated LaTeX report to a pdf some additional LaTeX packages may be needed to be installed in your system, such as texlive-core, pdflatex, texlive-bibtex-extra in apt.
