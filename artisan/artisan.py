@@ -7,7 +7,7 @@ import re
 
 def copy_temp_file(source_file):
 
-    output_path = source_file.replace("cacti_tests", "cacti_tests/output/artisan")
+    output_path = source_file.replace("cacti_tests", str(sys.argv[2]))
 
     file_name = source_file.split("/")[-2]
 
