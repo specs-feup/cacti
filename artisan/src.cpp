@@ -1,3 +1,6 @@
-#include <cstddef>
-#include <iostream>
-int main() { std::cout << alignof(std::max_align_t) << '\n'; }
+int main() {
+    int b[2] = {0, 1};
+    for (int i : b) {
+        ;
+    }
+}

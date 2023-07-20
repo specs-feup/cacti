@@ -54,7 +54,7 @@ def copy_temp_file(source_file):
     if(success):
         output_directory = os.path.dirname(output_path)
         os.makedirs(output_directory, exist_ok=True)
-        with open(output_path, "w+") as file:
+        with open(output_path, "w") as file:
             file.write(output[4])
 
     test_code_generation = {
