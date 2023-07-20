@@ -52,7 +52,9 @@ def copy_temp_file(source_file):
         log=stdout
 
     if(success):
-        with open(output_path, "w") as file:
+        output_directory = os.path.dirname(output_path)
+        os.makedirs(output_directory, exist_ok=True)
+        with open(output_path, "w+") as file:
             file.write(output[4])
 
     test_code_generation = {
