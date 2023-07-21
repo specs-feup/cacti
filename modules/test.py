@@ -1,8 +1,7 @@
 import os
 import json
-
+from concurrent.futures import ThreadPoolExecutor
 from modules.command import *
-
 from modules.handlers.idempotency import IdempotencyHandler
 from modules.handlers.correctness import CorrectnessHandler
 from modules.handlers.display import DisplayHandler
@@ -154,8 +153,16 @@ class Test:
 
         # if both succeeded, test idempotency and correctness
         if self.contains(KEY_TEST_CODEGEN) and self.success(KEY_TEST_CODEGEN):
-            self.idempotency()
-            self.correctness()
+            with ThreadPoolExecutor() as executor:
+                idem_future = executor.submit(self.idempotency)
+                corr_future = executor.submit(self.correctness)
+
+                idem_future.result()
+                corr_future.result()
+
+        self.save()
+
+        
 
     def parse_output(self, output: str) -> str:
         """Parse the output of the transpiler process.
@@ -221,12 +228,14 @@ class Test:
     def idempotency(self) -> None:
         """Test for idempotency by calling the appropriate handler.
         """
+
         handler = IdempotencyHandler(self.idem_params)
 
         subtests, success = handler.run()
 
         self.results[KEY_TEST_IDEMPOTENCY][KEY_RESULTS] = subtests
         self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
+
 
     def correctness(self) -> None:
         """Test for correctness by calling the appropriate handler.
@@ -237,6 +246,7 @@ class Test:
 
         self.results[KEY_TEST_CORRECTNESS][KEY_TIME] = elapsed
         self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = success
+
 
     def save(self) -> None:
         """Write the result JSON in the output folder.
