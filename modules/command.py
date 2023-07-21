@@ -89,5 +89,4 @@ class Command:
         proc.wait()
 
         stdout, stderr = proc.communicate()
-
         return proc.returncode, stdout, stderr
