@@ -1,6 +1,6 @@
 import os
 import json
-
+import threading
 from modules.command import *
 
 from modules.handlers.idempotency import IdempotencyHandler
@@ -154,8 +154,18 @@ class Test:
 
         # if both succeeded, test idempotency and correctness
         if self.contains(KEY_TEST_CODEGEN) and self.success(KEY_TEST_CODEGEN):
-            self.idempotency()
-            self.correctness()
+            idem_thread = threading.Thread(target=self.idempotency)
+            corr_thread = threading.Thread(target=self.correctness)
+
+            idem_thread.start()
+            corr_thread.start()
+
+            idem_thread.join()
+            corr_thread.join()
+
+        self.save()
+
+        
 
     def parse_output(self, output: str) -> str:
         """Parse the output of the transpiler process.
@@ -221,6 +231,8 @@ class Test:
     def idempotency(self) -> None:
         """Test for idempotency by calling the appropriate handler.
         """
+
+        print("Idempotency test started")
         handler = IdempotencyHandler(self.idem_params)
 
         subtests, success = handler.run()
@@ -228,15 +240,20 @@ class Test:
         self.results[KEY_TEST_IDEMPOTENCY][KEY_RESULTS] = subtests
         self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
 
+        print("Idempotency test finished")
+
     def correctness(self) -> None:
         """Test for correctness by calling the appropriate handler.
         """
+        print("Correctness test started")
         handler = CorrectnessHandler(self.corr_params)
 
         success, elapsed = handler.run()
 
         self.results[KEY_TEST_CORRECTNESS][KEY_TIME] = elapsed
         self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = success
+
+        print("Correctness test finished")
 
     def save(self) -> None:
         """Write the result JSON in the output folder.
