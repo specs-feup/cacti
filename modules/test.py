@@ -1,8 +1,7 @@
 import os
 import json
-import threading
+from concurrent.futures import ThreadPoolExecutor
 from modules.command import *
-
 from modules.handlers.idempotency import IdempotencyHandler
 from modules.handlers.correctness import CorrectnessHandler
 from modules.handlers.display import DisplayHandler
@@ -154,14 +153,12 @@ class Test:
 
         # if both succeeded, test idempotency and correctness
         if self.contains(KEY_TEST_CODEGEN) and self.success(KEY_TEST_CODEGEN):
-            idem_thread = threading.Thread(target=self.idempotency)
-            corr_thread = threading.Thread(target=self.correctness)
+            with ThreadPoolExecutor() as executor:
+                idem_future = executor.submit(self.idempotency)
+                corr_future = executor.submit(self.correctness)
 
-            idem_thread.start()
-            corr_thread.start()
-
-            idem_thread.join()
-            corr_thread.join()
+                idem_future.result()
+                corr_future.result()
 
         self.save()
 
@@ -232,7 +229,6 @@ class Test:
         """Test for idempotency by calling the appropriate handler.
         """
 
-        print("Idempotency test started")
         handler = IdempotencyHandler(self.idem_params)
 
         subtests, success = handler.run()
@@ -240,12 +236,10 @@ class Test:
         self.results[KEY_TEST_IDEMPOTENCY][KEY_RESULTS] = subtests
         self.results[KEY_TEST_IDEMPOTENCY][KEY_SUCCESS] = success
 
-        print("Idempotency test finished")
 
     def correctness(self) -> None:
         """Test for correctness by calling the appropriate handler.
         """
-        print("Correctness test started")
         handler = CorrectnessHandler(self.corr_params)
 
         success, elapsed = handler.run()
@@ -253,7 +247,6 @@ class Test:
         self.results[KEY_TEST_CORRECTNESS][KEY_TIME] = elapsed
         self.results[KEY_TEST_CORRECTNESS][KEY_SUCCESS] = success
 
-        print("Correctness test finished")
 
     def save(self) -> None:
         """Write the result JSON in the output folder.
