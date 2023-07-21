@@ -6,16 +6,13 @@ import json
 import re
 
 def copy_temp_file(source_file):
-    print("args: " + str(sys.argv))
-    print("argv2: " + str(sys.argv[2]))
     if(sys.argv[2].__contains__('cacti/output/artisan')):
         output_path = "../output/generated/artisan/" + source_file.split("/")[-2] + "/src.cpp"
     else:
-        first_element = sys.argv[2].split("/")[0]
-        second_element = ""
-        if(first_element == ".."):
-            second_element = sys.argv[2].split("/")[1]
-        output_path = first_element + "/" + second_element + "/generated/artisan/" + source_file.split("/")[-2] + "/src.cpp"
+        first_element = sys.argv[2]
+        for _ in range(6):
+            first_element = os.path.dirname(first_element)  #removes the default 6 directories
+        output_path = "../" + first_element + "/generated/artisan/" + source_file.split("/")[-2] + "/src.cpp"
 
     file_name = source_file.split("/")[-2]
 
