@@ -7,12 +7,9 @@ import re
 
 def copy_temp_file(source_file):
     if(sys.argv[2].__contains__('cacti/output/artisan')):
-        output_path = "../output/generated/artisan/" + source_file.split("/")[-2] + "/src.cpp"
+        output_path =  sys.argv[2] + "/src.cpp"    
     else:
-        first_element = sys.argv[2]
-        for _ in range(6):
-            first_element = os.path.dirname(first_element)  #removes the default 6 directories
-        output_path = "../" + first_element + "/generated/artisan/" + source_file.split("/")[-2] + "/src.cpp"
+        output_path = "../" + sys.argv[2] + "/src.cpp"
 
     file_name = source_file.split("/")[-2]
 
